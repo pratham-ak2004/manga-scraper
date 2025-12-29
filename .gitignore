@@ -3,3 +3,5 @@ images/
 json/
 pdfs/
 Vinland Saga/
+__pycache__
+.env

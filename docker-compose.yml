@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: manga-scraper-postgres
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: ${DB_NAME:-manga_scraper}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: manga-scraper-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-password}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "15672:15672"
+    volumes:
+      - manga-scraper-rabbitmq-data:/var/lib/rabbitmq
+    restart: unless-stopped
+
+  redis:
+    image: redis:8.4
+    container_name: manga-scraper-redis
+    command:
+      - redis-server
+      - --requirepass
+      - ${REDIS_PASSWORD:-password}
+      - --appendonly
+      - "yes"
+      - --user
+      - ${REDIS_USERNAME:-default}
+      - "on"
+      - ">${REDIS_PASSWORD:-password}"
+      - ~*
+      - +@all
+      - --databases
+      - ${REDIS_DB:-16}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - manga-scraper-redis-data:/data
+    restart: unless-stopped
+
+volumes:
+  manga-scraper-postgres-data:
+  manga-scraper-rabbitmq-data:
+  manga-scraper-redis-data:
