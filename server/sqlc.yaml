@@ -1,0 +1,18 @@
+version: "2"
+plugins:
+  # Download the .wasm file from https://github.com/sqlc-dev/sqlc-gen-go/tags
+  # or replace with the remote URL of your choice
+  - name: golang
+    wasm:
+      url: file://./bin/sqlc-1.4.0.wasm
+      sha256: a0d96d63000b017f1aeb7857b0a864744fb5e968d5a11dded27170c9a44c7397
+sql:
+  - schema: ./db/schema.sql
+    queries: ./db/query.sql
+    engine: postgresql
+    codegen:
+      - plugin: golang
+        out: ./db/generated
+        options:
+          package: generated
+          sql_package: pgx/v5

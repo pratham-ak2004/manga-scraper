@@ -1,0 +1,28 @@
+package pages
+
+import (
+"download-server/views/layout"
+"download-server/cmd/utils"
+"download-server/views/components"
+)
+
+templ Files(directoryItems []utils.DirectoryItem, path string) {
+@layout.Index() {
+<main class="flex justify-center w-full pt-20">
+  <div class="w-full max-w-7xl">
+    <h1 class="text-nowrap text-xl font-bold w-full">Browsing: <span class="font-semibold">{ path }</span></h1>
+    <div class="grid grid-cols-2 w-full max-w-7xl mt-4 p-2">
+      <!-- Table Heading -->
+      <div class="text-lg font-semibold">Name</div>
+      <div class="text-lg font-semibold">Size</div>
+      <!-- Items -->
+      if len(directoryItems) == 0 {
+      @components.NoContent(path)
+      }else{
+      @components.ContentList(directoryItems, path)
+      }
+    </div>
+  </div>
+</main>
+}
+}

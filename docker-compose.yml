@@ -1,3 +1,13 @@
+volumes:
+  manga-scraper-rabbitmq-data:
+  manga-scraper-redis-data:
+  # manga-scraper-data:
+
+# networks:
+#   public:
+#   internal:
+#     internal: true
+
 services:
   postgres:
     image: postgres:18
@@ -8,6 +18,8 @@ services:
       POSTGRES_DB: ${DB_NAME:-manga_scraper}
     ports:
       - "${DB_PORT:-5432}:5432"
+    # expose:
+    #   - "5432"
     restart: unless-stopped
 
   rabbitmq:
@@ -19,6 +31,9 @@ services:
     ports:
       - "${RABBITMQ_PORT:-5672}:5672"
       - "15672:15672"
+    # expose:
+    #   - 5672
+    #   - 15672
     volumes:
       - manga-scraper-rabbitmq-data:/var/lib/rabbitmq
     restart: unless-stopped
@@ -38,15 +53,20 @@ services:
       - ">${REDIS_PASSWORD:-password}"
       - ~*
       - +@all
-      - --databases
-      - ${REDIS_DB:-16}
     ports:
       - "${REDIS_PORT:-6379}:6379"
+    # expose:
+    #   - "6379"
     volumes:
       - manga-scraper-redis-data:/data
     restart: unless-stopped
 
-volumes:
-  manga-scraper-postgres-data:
-  manga-scraper-rabbitmq-data:
-  manga-scraper-redis-data:
+  # https://hub.docker.com/r/selenium/standalone-chrome/
+  # selenium-browser:
+  #   image: selenium/standalone-chrome:143.0-20251212
+  #   container_name: manga-scraper-selenium-browser
+  #   ports:
+  #     - "4444:4444"
+  #     - "7900:7900"
+  #   # shm_size: 2g
+  #   restart: unless-stopped

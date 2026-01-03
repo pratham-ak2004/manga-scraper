@@ -1,0 +1,42 @@
+from utils.logger import get_logger
+from abc import ABC, abstractmethod
+from celery import Task
+
+logger = get_logger(__name__)
+
+class BaseEventTask(Task, ABC):
+    """Base class for event-based Celery tasks"""
+    
+    # Override in subclasses
+    name = None
+    max_retries = 3
+    retry_countdown = 60
+    
+    def __init__(self):
+        if not self.name:
+            raise NotImplementedError("Subclasses must define name")
+        super().__init__()
+    
+    @abstractmethod
+    def process(self, event_data):
+        """Implement task logic here"""
+        pass
+    
+    def run(self, event):
+        """Celery task entry point"""
+        try:
+            if not self.validate(event):
+                logger.error(f"Invalid event: {self.name} - {event}")
+                return None 
+            
+            result = self.process(event)
+            logger.info(f"Successfully processed {self.name}")
+            return result
+            
+        except Exception as exc:
+            logger.error(f"Error in {self.name}: {exc}")
+            raise self.retry(exc=exc, countdown=self.retry_countdown)
+    
+    def validate(self, event):
+        """Override for custom validation"""
+        return isinstance(event, dict)

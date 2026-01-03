@@ -1,0 +1,65 @@
+package components
+
+import (
+"strings"
+utils "download-server/cmd/utils"
+)
+
+templ ContentList(directoryItems []utils.DirectoryItem, path string) {
+
+<div class="col-span-2 gap-2 my-4 grid grid-cols-2 p-2 border-2" id={ strings.ReplaceAll(path, "/" , "" )}>
+  { children... }
+  <!-- Items -->
+  for idx, item := range directoryItems {
+
+  {{ id := strings.ReplaceAll(item.URL,"/","") }}
+
+  <div class="col-span-2 grid grid-cols-2">
+    <!-- Name -->
+    <div class="px-2 w-full flex flex-row flex-nowrap">
+      if item.IsDir {
+      &#128193; <button hx-get={ "/directory/" + item.URL } hx-trigger="click" hx-target={"#target" + id}
+        hx-swap="innerHTML" class="text-blue-700 px-2">
+        { item.Name }</button>
+      }else{
+      &#128441; <a href={ "/download" +item.URL } class="text-blue-700 px-2">{ item.Name }</a>
+      }
+    </div>
+    <!-- Size -->
+    <div>
+      { utils.FormatSize(item.Size, item.IsDir) }
+    </div>
+    <div id={"target" + id} class="col-span-2"></div>
+  </div>
+
+  <!-- Separator -->
+  if len(directoryItems) > idx+1 {
+  <div class="w-full col-span-2 bg-slate-400/50 h-px" />
+  }
+  }
+</div>
+
+}
+
+templ SubContentList(directoryItems []utils.DirectoryItem, path string) {
+if len(directoryItems) == 0 {
+@NoContent(path){
+<button class="bg-red-500 text-white rounded px-1" hx-get="/" hx-trigger="click" hx-swap="delete" hx-target={ "#" +
+  strings.ReplaceAll(path, "/" , "" )}>Close</button>
+}
+}else{
+@ContentList(directoryItems, path){
+<div class="w-full flex items-end flex-col col-span-2">
+  <button class="bg-red-500 text-white rounded px-1" hx-get="/" hx-trigger="click" hx-swap="delete" hx-target={ "#" +
+    strings.ReplaceAll(path, "/" , "" )}>Collapse</button>
+</div>
+}
+}
+}
+
+templ NoContent(path string) {
+<div class="col-span-2 p-2 flex" id={ strings.ReplaceAll(path, "/" ,"")}>
+  <h1 class="w-full">No content in this folder</h1>
+  { children... }
+</div>
+}

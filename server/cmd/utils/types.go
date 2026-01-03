@@ -1,4 +1,11 @@
-package typing
+package utils
+
+type DirectoryItem struct {
+	Name  string `json:"name"`
+	IsDir bool   `json:"is_dir"`
+	Size  int64  `json:"size"`
+	URL   string `json:"url"`
+}
 
 type DownloadRequest struct {
 	Folder     string   `json:"folder"`

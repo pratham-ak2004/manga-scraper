@@ -7,6 +7,9 @@ worker:
 listener:
 	python app.py --listener
 
+flower:
+	python app.py --flower
+
 start-rabbit:
 	@CONTAINER_NAME="manga-scraper-rabbitmq"; \
 	if ! [ -x "$$(command -v docker)" ]; then \

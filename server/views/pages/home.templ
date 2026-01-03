@@ -1,0 +1,24 @@
+package pages
+
+import (
+"download-server/views/layout"
+)
+
+templ Home() {
+@layout.Index() {
+<main class="flex flex-col justify-center w-full">
+  <section
+    class="w-full p-4 h-96 flex justify-center items-center relative bg-center bg-cover bg-[url('/assets/images/background.jpg')]">
+    <div class="absolute w-full h-full left-0 top-0 bg-black/60 z-10"></div>
+    <form hx-post="/api/v1/manga" hx-trigger="submit" hx-target="#manga-submit-result" hx-swap="innerHTML"
+      class="z-20 w-full max-w-2xl mx-auto flex flex-nowrap flex-row">
+      <input type="text" id="manga-url" name="manga-url" required
+        class="border w-full rounded-l-lg bg-white h-full text-lg p-2" />
+      <button type="submit"
+        class="bg-primary text-white p-2 border rounded-r-full text-xl font-semibold">Extract</button>
+    </form>
+  </section>
+  <div id="manga-submit-result"></div>
+</main>
+}
+}

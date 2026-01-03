@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../prisma/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Manga {
+  id String @id @default(cuid())
+
+  title String
+  url   String @unique
+
+  chapters Chapter[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Chapter {
+  id String @id @default(cuid())
+
+  number Float
+  url    String @unique
+
+  manga   Manga  @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+  mangaId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Page Page[]
+
+  @@index([number])
+}
+
+model Page {
+  index Int
+  url   String @unique
+
+  chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  chapterId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([index, chapterId])
+  @@index([chapterId, index])
+}

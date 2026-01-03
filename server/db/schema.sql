@@ -1,0 +1,78 @@
+-- Active: 1767429363376@@127.0.0.1@5432@manga_db
+-- CREATE DATABASE manga_scraper;
+
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+CREATE TYPE "Status" AS ENUM ('ONGOING', 'COMPLETED', 'UPCOMING');
+
+CREATE TABLE IF NOT EXISTS Manga (
+    id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(), -- cuid() is not native, use VARCHAR
+    url TEXT UNIQUE NOT NULL,
+
+    title VARCHAR(255),
+    status "Status" DEFAULT 'UPCOMING',
+    poster TEXT,
+    details JSONB,
+    description TEXT,
+
+    createdAt TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS Chapter (
+    id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
+    number FLOAT NOT NULL,
+    url TEXT UNIQUE NOT NULL,
+
+    mangaId VARCHAR(36) NOT NULL REFERENCES Manga(id) ON DELETE CASCADE,
+    createdAt TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chapter_number_idx UNIQUE (number, mangaId)
+);
+
+CREATE INDEX IF NOT EXISTS chapter_number_index ON Chapter(number);
+
+CREATE TABLE IF NOT EXISTS Page (
+    index INT NOT NULL,
+    url TEXT UNIQUE NOT NULL,
+    altText VARCHAR(255),
+
+    chapterId VARCHAR(36) NOT NULL REFERENCES Chapter(id) ON DELETE CASCADE,
+    createdAt TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (index, chapterId)
+);
+
+CREATE TABLE IF NOT EXISTS Task (
+    id TEXT UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+
+    createdAt TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS page_chapter_index_index ON Page(chapterId, index);
+
+CREATE OR REPLACE FUNCTION set_current_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updatedAt = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER updated_at_Manga_trigger
+BEFORE UPDATE ON Manga
+FOR EACH ROW
+EXECUTE FUNCTION set_current_timestamp();
+
+CREATE TRIGGER updated_at_Chapter_trigger
+BEFORE UPDATE ON Chapter
+FOR EACH ROW
+EXECUTE FUNCTION set_current_timestamp();
+
+CREATE TRIGGER updated_at_Page_trigger
+BEFORE UPDATE ON Page
+FOR EACH ROW
+EXECUTE FUNCTION set_current_timestamp();

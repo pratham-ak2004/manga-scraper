@@ -1,0 +1,17 @@
+package layout
+
+import "download-server/views/components"
+
+templ Index() {
+<!DOCTYPE html>
+<html lang="en">
+@Head()
+
+<body class="min-h-screen min-w-screen">
+  @components.Navbar()
+  { children... }
+  @Scripts()
+</body>
+
+</html>
+}
