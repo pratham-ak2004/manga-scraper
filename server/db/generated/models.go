@@ -11,6 +11,49 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type ArchiveStatus string
+
+const (
+	ArchiveStatusPENDING   ArchiveStatus = "PENDING"
+	ArchiveStatusCOMPLETED ArchiveStatus = "COMPLETED"
+	ArchiveStatusFAILED    ArchiveStatus = "FAILED"
+)
+
+func (e *ArchiveStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ArchiveStatus(s)
+	case string:
+		*e = ArchiveStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ArchiveStatus: %T", src)
+	}
+	return nil
+}
+
+type NullArchiveStatus struct {
+	ArchiveStatus ArchiveStatus
+	Valid         bool // Valid is true if ArchiveStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullArchiveStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.ArchiveStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ArchiveStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullArchiveStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ArchiveStatus), nil
+}
+
 type Status string
 
 const (
@@ -54,11 +97,65 @@ func (ns NullStatus) Value() (driver.Value, error) {
 	return string(ns.Status), nil
 }
 
+type TaskType string
+
+const (
+	TaskTypePIPELINE TaskType = "PIPELINE"
+	TaskTypeREQUEST  TaskType = "REQUEST"
+)
+
+func (e *TaskType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = TaskType(s)
+	case string:
+		*e = TaskType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for TaskType: %T", src)
+	}
+	return nil
+}
+
+type NullTaskType struct {
+	TaskType TaskType
+	Valid    bool // Valid is true if TaskType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullTaskType) Scan(value interface{}) error {
+	if value == nil {
+		ns.TaskType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.TaskType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullTaskType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.TaskType), nil
+}
+
+type Archive struct {
+	ID           string
+	Filepath     string
+	Startchapter pgtype.Float8
+	Endchapter   pgtype.Float8
+	Status       NullArchiveStatus
+	Complete     pgtype.Bool
+	Size         pgtype.Int8
+	Mangaid      string
+	Createdat    pgtype.Timestamp
+	Updatedat    pgtype.Timestamp
+}
+
 type Chapter struct {
 	ID        string
 	Number    float64
 	Url       string
-	Alt       pgtype.Text
 	Mangaid   string
 	Createdat pgtype.Timestamp
 	Updatedat pgtype.Timestamp
@@ -70,22 +167,27 @@ type Manga struct {
 	Title       pgtype.Text
 	Status      NullStatus
 	Poster      pgtype.Text
-	Details     []byte
+	Details     interface{}
 	Description pgtype.Text
 	Createdat   pgtype.Timestamp
 	Updatedat   pgtype.Timestamp
 }
 
 type Page struct {
-	Index     int32
-	Url       string
-	Chapterid string
-	Createdat pgtype.Timestamp
-	Updatedat pgtype.Timestamp
+	Index        int32
+	Url          string
+	Alttext      pgtype.Text
+	Filepath     string
+	Downloadedat pgtype.Timestamp
+	Chapterid    string
+	Createdat    pgtype.Timestamp
+	Updatedat    pgtype.Timestamp
 }
 
 type Task struct {
 	ID        string
 	Name      string
+	Type      NullTaskType
+	Data      interface{}
 	Createdat pgtype.Timestamp
 }

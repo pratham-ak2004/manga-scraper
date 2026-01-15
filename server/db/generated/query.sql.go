@@ -11,8 +11,44 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createArchiveWithRange = `-- name: CreateArchiveWithRange :one
+INSERT INTO Archive (mangaId, filePath, startChapter, endChapter, complete) VALUES ($1, $2, $3, $4, $5) RETURNING id, filepath, startchapter, endchapter, status, complete, size, mangaid, createdat, updatedat
+`
+
+type CreateArchiveWithRangeParams struct {
+	Mangaid      string
+	Filepath     string
+	Startchapter pgtype.Float8
+	Endchapter   pgtype.Float8
+	Complete     pgtype.Bool
+}
+
+func (q *Queries) CreateArchiveWithRange(ctx context.Context, arg CreateArchiveWithRangeParams) (Archive, error) {
+	row := q.db.QueryRow(ctx, createArchiveWithRange,
+		arg.Mangaid,
+		arg.Filepath,
+		arg.Startchapter,
+		arg.Endchapter,
+		arg.Complete,
+	)
+	var i Archive
+	err := row.Scan(
+		&i.ID,
+		&i.Filepath,
+		&i.Startchapter,
+		&i.Endchapter,
+		&i.Status,
+		&i.Complete,
+		&i.Size,
+		&i.Mangaid,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
 const createChapter = `-- name: CreateChapter :one
-INSERT INTO Chapter (number, url, mangaId) VALUES ($1, $2, $3) RETURNING id, number, url, alt, mangaid, createdat, updatedat
+INSERT INTO Chapter (number, url, mangaId) VALUES ($1, $2, $3) RETURNING id, number, url, mangaid, createdat, updatedat
 `
 
 type CreateChapterParams struct {
@@ -28,7 +64,6 @@ func (q *Queries) CreateChapter(ctx context.Context, arg CreateChapterParams) (C
 		&i.ID,
 		&i.Number,
 		&i.Url,
-		&i.Alt,
 		&i.Mangaid,
 		&i.Createdat,
 		&i.Updatedat,
@@ -42,7 +77,7 @@ VALUES ($1, $2, $3)
 ON CONFLICT (number, mangaId) 
 DO UPDATE SET 
     url = EXCLUDED.url
-RETURNING id, number, url, alt, mangaid, createdat, updatedat
+RETURNING id, number, url, mangaid, createdat, updatedat
 `
 
 type CreateChapterIfNotExistsParams struct {
@@ -58,7 +93,6 @@ func (q *Queries) CreateChapterIfNotExists(ctx context.Context, arg CreateChapte
 		&i.ID,
 		&i.Number,
 		&i.Url,
-		&i.Alt,
 		&i.Mangaid,
 		&i.Createdat,
 		&i.Updatedat,
@@ -94,21 +128,73 @@ func (q *Queries) CreateManga(ctx context.Context, arg CreateMangaParams) (Manga
 }
 
 const createPage = `-- name: CreatePage :one
-INSERT INTO Page (index, url, chapterId) VALUES ($1, $2, $3) RETURNING index, url, chapterid, createdat, updatedat
+INSERT INTO Page (index, url, filePath, chapterId, altText) VALUES ($1, $2, $3, $4, $5) RETURNING index, url, alttext, filepath, downloadedat, chapterid, createdat, updatedat
 `
 
 type CreatePageParams struct {
 	Index     int32
 	Url       string
+	Filepath  string
 	Chapterid string
+	Alttext   pgtype.Text
 }
 
 func (q *Queries) CreatePage(ctx context.Context, arg CreatePageParams) (Page, error) {
-	row := q.db.QueryRow(ctx, createPage, arg.Index, arg.Url, arg.Chapterid)
+	row := q.db.QueryRow(ctx, createPage,
+		arg.Index,
+		arg.Url,
+		arg.Filepath,
+		arg.Chapterid,
+		arg.Alttext,
+	)
 	var i Page
 	err := row.Scan(
 		&i.Index,
 		&i.Url,
+		&i.Alttext,
+		&i.Filepath,
+		&i.Downloadedat,
+		&i.Chapterid,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
+const createPageIfNotExists = `-- name: CreatePageIfNotExists :one
+INSERT INTO Page (index, url, altText, chapterId, filePath)
+VALUES ($1, $2, $3, $4, $5)
+ON CONFLICT (index, chapterId) 
+DO UPDATE SET 
+    url = EXCLUDED.url,
+    altText = EXCLUDED.altText,
+    filePath = EXCLUDED.filePath
+RETURNING index, url, alttext, filepath, downloadedat, chapterid, createdat, updatedat
+`
+
+type CreatePageIfNotExistsParams struct {
+	Index     int32
+	Url       string
+	Alttext   pgtype.Text
+	Chapterid string
+	Filepath  string
+}
+
+func (q *Queries) CreatePageIfNotExists(ctx context.Context, arg CreatePageIfNotExistsParams) (Page, error) {
+	row := q.db.QueryRow(ctx, createPageIfNotExists,
+		arg.Index,
+		arg.Url,
+		arg.Alttext,
+		arg.Chapterid,
+		arg.Filepath,
+	)
+	var i Page
+	err := row.Scan(
+		&i.Index,
+		&i.Url,
+		&i.Alttext,
+		&i.Filepath,
+		&i.Downloadedat,
 		&i.Chapterid,
 		&i.Createdat,
 		&i.Updatedat,
@@ -117,38 +203,51 @@ func (q *Queries) CreatePage(ctx context.Context, arg CreatePageParams) (Page, e
 }
 
 const createTask = `-- name: CreateTask :one
-INSERT INTO Task (id, name) VALUES ($1, $2) RETURNING id, name, createdat
+INSERT INTO Task (id, name, type) VALUES ($1, $2, $3) RETURNING id, name, type, data, createdat
 `
 
 type CreateTaskParams struct {
 	ID   string
 	Name string
+	Type NullTaskType
 }
 
 func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error) {
-	row := q.db.QueryRow(ctx, createTask, arg.ID, arg.Name)
+	row := q.db.QueryRow(ctx, createTask, arg.ID, arg.Name, arg.Type)
 	var i Task
-	err := row.Scan(&i.ID, &i.Name, &i.Createdat)
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Type,
+		&i.Data,
+		&i.Createdat,
+	)
 	return i, err
 }
 
 const deleteTaskByID = `-- name: DeleteTaskByID :one
-DELETE FROM Task WHERE id = $1 RETURNING id, name, createdat
+DELETE FROM Task WHERE id = $1 RETURNING id, name, type, data, createdat
 `
 
 func (q *Queries) DeleteTaskByID(ctx context.Context, id string) (Task, error) {
 	row := q.db.QueryRow(ctx, deleteTaskByID, id)
 	var i Task
-	err := row.Scan(&i.ID, &i.Name, &i.Createdat)
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Type,
+		&i.Data,
+		&i.Createdat,
+	)
 	return i, err
 }
 
 const getAllTask = `-- name: GetAllTask :many
-SELECT id, name, createdat FROM Task ORDER BY createdAt ASC
+SELECT id, name, type, data, createdat FROM Task WHERE type = $1 ORDER BY createdAt ASC
 `
 
-func (q *Queries) GetAllTask(ctx context.Context) ([]Task, error) {
-	rows, err := q.db.Query(ctx, getAllTask)
+func (q *Queries) GetAllTask(ctx context.Context, type_ NullTaskType) ([]Task, error) {
+	rows, err := q.db.Query(ctx, getAllTask, type_)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +255,13 @@ func (q *Queries) GetAllTask(ctx context.Context) ([]Task, error) {
 	var items []Task
 	for rows.Next() {
 		var i Task
-		if err := rows.Scan(&i.ID, &i.Name, &i.Createdat); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Type,
+			&i.Data,
+			&i.Createdat,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -167,8 +272,81 @@ func (q *Queries) GetAllTask(ctx context.Context) ([]Task, error) {
 	return items, nil
 }
 
+const getArchiveByMangaID = `-- name: GetArchiveByMangaID :one
+SELECT id, filepath, startchapter, endchapter, status, complete, size, mangaid, createdat, updatedat FROM Archive WHERE mangaId = $1 AND startChapter = $2 AND endChapter = $3
+`
+
+type GetArchiveByMangaIDParams struct {
+	Mangaid      string
+	Startchapter pgtype.Float8
+	Endchapter   pgtype.Float8
+}
+
+func (q *Queries) GetArchiveByMangaID(ctx context.Context, arg GetArchiveByMangaIDParams) (Archive, error) {
+	row := q.db.QueryRow(ctx, getArchiveByMangaID, arg.Mangaid, arg.Startchapter, arg.Endchapter)
+	var i Archive
+	err := row.Scan(
+		&i.ID,
+		&i.Filepath,
+		&i.Startchapter,
+		&i.Endchapter,
+		&i.Status,
+		&i.Complete,
+		&i.Size,
+		&i.Mangaid,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
+const getArchiveByMangaIDIfComplete = `-- name: GetArchiveByMangaIDIfComplete :one
+SELECT id, filepath, startchapter, endchapter, status, complete, size, mangaid, createdat, updatedat FROM Archive WHERE mangaId = $1 AND complete = TRUE
+`
+
+func (q *Queries) GetArchiveByMangaIDIfComplete(ctx context.Context, mangaid string) (Archive, error) {
+	row := q.db.QueryRow(ctx, getArchiveByMangaIDIfComplete, mangaid)
+	var i Archive
+	err := row.Scan(
+		&i.ID,
+		&i.Filepath,
+		&i.Startchapter,
+		&i.Endchapter,
+		&i.Status,
+		&i.Complete,
+		&i.Size,
+		&i.Mangaid,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
+const getChapterByIndexAndManga = `-- name: GetChapterByIndexAndManga :one
+SELECT id, number, url, mangaid, createdat, updatedat FROM Chapter WHERE number = $1 AND mangaId = $2
+`
+
+type GetChapterByIndexAndMangaParams struct {
+	Number  float64
+	Mangaid string
+}
+
+func (q *Queries) GetChapterByIndexAndManga(ctx context.Context, arg GetChapterByIndexAndMangaParams) (Chapter, error) {
+	row := q.db.QueryRow(ctx, getChapterByIndexAndManga, arg.Number, arg.Mangaid)
+	var i Chapter
+	err := row.Scan(
+		&i.ID,
+		&i.Number,
+		&i.Url,
+		&i.Mangaid,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
 const getChapterByURL = `-- name: GetChapterByURL :one
-SELECT id, number, url, alt, mangaid, createdat, updatedat FROM Chapter WHERE url = $1
+SELECT id, number, url, mangaid, createdat, updatedat FROM Chapter WHERE url = $1
 `
 
 func (q *Queries) GetChapterByURL(ctx context.Context, url string) (Chapter, error) {
@@ -178,8 +356,28 @@ func (q *Queries) GetChapterByURL(ctx context.Context, url string) (Chapter, err
 		&i.ID,
 		&i.Number,
 		&i.Url,
-		&i.Alt,
 		&i.Mangaid,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
+const getMangaByID = `-- name: GetMangaByID :one
+SELECT id, url, title, status, poster, details, description, createdat, updatedat FROM Manga WHERE id = $1
+`
+
+func (q *Queries) GetMangaByID(ctx context.Context, id string) (Manga, error) {
+	row := q.db.QueryRow(ctx, getMangaByID, id)
+	var i Manga
+	err := row.Scan(
+		&i.ID,
+		&i.Url,
+		&i.Title,
+		&i.Status,
+		&i.Poster,
+		&i.Details,
+		&i.Description,
 		&i.Createdat,
 		&i.Updatedat,
 	)
@@ -207,6 +405,260 @@ func (q *Queries) GetMangaByURL(ctx context.Context, url string) (Manga, error) 
 	return i, err
 }
 
+const getMangaList = `-- name: GetMangaList :many
+SELECT id, url, title, status, poster, details, description, createdat, updatedat FROM Manga
+`
+
+func (q *Queries) GetMangaList(ctx context.Context) ([]Manga, error) {
+	rows, err := q.db.Query(ctx, getMangaList)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Manga
+	for rows.Next() {
+		var i Manga
+		if err := rows.Scan(
+			&i.ID,
+			&i.Url,
+			&i.Title,
+			&i.Status,
+			&i.Poster,
+			&i.Details,
+			&i.Description,
+			&i.Createdat,
+			&i.Updatedat,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPageByIndexAndChapterID = `-- name: GetPageByIndexAndChapterID :one
+SELECT index, url, alttext, filepath, downloadedat, chapterid, createdat, updatedat FROM Page where index = $1 AND chapterId = $2
+`
+
+type GetPageByIndexAndChapterIDParams struct {
+	Index     int32
+	Chapterid string
+}
+
+func (q *Queries) GetPageByIndexAndChapterID(ctx context.Context, arg GetPageByIndexAndChapterIDParams) (Page, error) {
+	row := q.db.QueryRow(ctx, getPageByIndexAndChapterID, arg.Index, arg.Chapterid)
+	var i Page
+	err := row.Scan(
+		&i.Index,
+		&i.Url,
+		&i.Alttext,
+		&i.Filepath,
+		&i.Downloadedat,
+		&i.Chapterid,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
+const getPagesByRangeAndMangaID = `-- name: GetPagesByRangeAndMangaID :many
+SELECT 
+    p.index,
+    p.url,
+    p.altText,
+    p.filePath,
+    p.downloadedAt,
+    p.chapterId,
+    c.number AS chapterNumber,
+    c.url AS chapterUrl
+FROM Page p
+INNER JOIN Chapter c ON p.chapterId = c.id
+WHERE c.mangaId = $1 AND c.number >= $2 AND c.number <= $3
+ORDER BY c.number ASC, p.index ASC
+`
+
+type GetPagesByRangeAndMangaIDParams struct {
+	Mangaid  string
+	Number   float64
+	Number_2 float64
+}
+
+type GetPagesByRangeAndMangaIDRow struct {
+	Index         int32
+	Url           string
+	Alttext       pgtype.Text
+	Filepath      string
+	Downloadedat  pgtype.Timestamp
+	Chapterid     string
+	Chapternumber float64
+	Chapterurl    string
+}
+
+func (q *Queries) GetPagesByRangeAndMangaID(ctx context.Context, arg GetPagesByRangeAndMangaIDParams) ([]GetPagesByRangeAndMangaIDRow, error) {
+	rows, err := q.db.Query(ctx, getPagesByRangeAndMangaID, arg.Mangaid, arg.Number, arg.Number_2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPagesByRangeAndMangaIDRow
+	for rows.Next() {
+		var i GetPagesByRangeAndMangaIDRow
+		if err := rows.Scan(
+			&i.Index,
+			&i.Url,
+			&i.Alttext,
+			&i.Filepath,
+			&i.Downloadedat,
+			&i.Chapterid,
+			&i.Chapternumber,
+			&i.Chapterurl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listMangaDashboard = `-- name: ListMangaDashboard :many
+SELECT
+    m.id                          AS manga_id,
+    m.title                       AS title,
+    m.url                         AS manga_url,
+    m.status                      AS status,
+    m.poster                      AS poster,
+
+    m.createdAt                   AS manga_created_at,
+    m.updatedAt                   AS manga_updated_at,
+
+    COUNT(DISTINCT c.id)::INT     AS total_chapters,
+    COUNT(p.url)::INT             AS total_pages,
+
+    COALESCE(MAX(c.number), 0)    AS latest_chapter_number,
+    MAX(c.updatedAt)              AS latest_chapter_updated_at
+
+FROM Manga m
+LEFT JOIN Chapter c
+    ON c.mangaId = m.id
+LEFT JOIN Page p
+    ON p.chapterId = c.id
+
+GROUP BY
+    m.id,
+    m.title,
+    m.url,
+    m.status,
+    m.poster,
+    m.createdAt,
+    m.updatedAt
+
+ORDER BY
+    m.updatedAt DESC
+`
+
+type ListMangaDashboardRow struct {
+	MangaID                string
+	Title                  pgtype.Text
+	MangaUrl               string
+	Status                 NullStatus
+	Poster                 pgtype.Text
+	MangaCreatedAt         pgtype.Timestamp
+	MangaUpdatedAt         pgtype.Timestamp
+	TotalChapters          int32
+	TotalPages             int32
+	LatestChapterNumber    interface{}
+	LatestChapterUpdatedAt interface{}
+}
+
+func (q *Queries) ListMangaDashboard(ctx context.Context) ([]ListMangaDashboardRow, error) {
+	rows, err := q.db.Query(ctx, listMangaDashboard)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListMangaDashboardRow
+	for rows.Next() {
+		var i ListMangaDashboardRow
+		if err := rows.Scan(
+			&i.MangaID,
+			&i.Title,
+			&i.MangaUrl,
+			&i.Status,
+			&i.Poster,
+			&i.MangaCreatedAt,
+			&i.MangaUpdatedAt,
+			&i.TotalChapters,
+			&i.TotalPages,
+			&i.LatestChapterNumber,
+			&i.LatestChapterUpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateArchiveStatusAndSizeByID = `-- name: UpdateArchiveStatusAndSizeByID :one
+UPDATE Archive SET status = $2, size = $3 WHERE id = $1 RETURNING id, filepath, startchapter, endchapter, status, complete, size, mangaid, createdat, updatedat
+`
+
+type UpdateArchiveStatusAndSizeByIDParams struct {
+	ID     string
+	Status NullArchiveStatus
+	Size   pgtype.Int8
+}
+
+func (q *Queries) UpdateArchiveStatusAndSizeByID(ctx context.Context, arg UpdateArchiveStatusAndSizeByIDParams) (Archive, error) {
+	row := q.db.QueryRow(ctx, updateArchiveStatusAndSizeByID, arg.ID, arg.Status, arg.Size)
+	var i Archive
+	err := row.Scan(
+		&i.ID,
+		&i.Filepath,
+		&i.Startchapter,
+		&i.Endchapter,
+		&i.Status,
+		&i.Complete,
+		&i.Size,
+		&i.Mangaid,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
+const updateChapterByID = `-- name: UpdateChapterByID :one
+UPDATE Chapter SET url = $2 WHERE id = $1 RETURNING id, number, url, mangaid, createdat, updatedat
+`
+
+type UpdateChapterByIDParams struct {
+	ID  string
+	Url string
+}
+
+func (q *Queries) UpdateChapterByID(ctx context.Context, arg UpdateChapterByIDParams) (Chapter, error) {
+	row := q.db.QueryRow(ctx, updateChapterByID, arg.ID, arg.Url)
+	var i Chapter
+	err := row.Scan(
+		&i.ID,
+		&i.Number,
+		&i.Url,
+		&i.Mangaid,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
 const updateMangaByID = `-- name: UpdateMangaByID :one
 UPDATE Manga SET title = $2, status = $3, poster = $4, description = $5, details = $6 WHERE id = $1 RETURNING id, url, title, status, poster, details, description, createdat, updatedat
 `
@@ -217,7 +669,7 @@ type UpdateMangaByIDParams struct {
 	Status      NullStatus
 	Poster      pgtype.Text
 	Description pgtype.Text
-	Details     []byte
+	Details     interface{}
 }
 
 func (q *Queries) UpdateMangaByID(ctx context.Context, arg UpdateMangaByIDParams) (Manga, error) {
@@ -240,6 +692,54 @@ func (q *Queries) UpdateMangaByID(ctx context.Context, arg UpdateMangaByIDParams
 		&i.Description,
 		&i.Createdat,
 		&i.Updatedat,
+	)
+	return i, err
+}
+
+const updatePageDownloadedAt = `-- name: UpdatePageDownloadedAt :one
+UPDATE Page SET downloadedAt = $3 WHERE index = $1 AND chapterId = $2 RETURNING index, url, alttext, filepath, downloadedat, chapterid, createdat, updatedat
+`
+
+type UpdatePageDownloadedAtParams struct {
+	Index        int32
+	Chapterid    string
+	Downloadedat pgtype.Timestamp
+}
+
+func (q *Queries) UpdatePageDownloadedAt(ctx context.Context, arg UpdatePageDownloadedAtParams) (Page, error) {
+	row := q.db.QueryRow(ctx, updatePageDownloadedAt, arg.Index, arg.Chapterid, arg.Downloadedat)
+	var i Page
+	err := row.Scan(
+		&i.Index,
+		&i.Url,
+		&i.Alttext,
+		&i.Filepath,
+		&i.Downloadedat,
+		&i.Chapterid,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
+const updateTaskByID = `-- name: UpdateTaskByID :one
+UPDATE Task SET data = $2 WHERE id = $1 RETURNING id, name, type, data, createdat
+`
+
+type UpdateTaskByIDParams struct {
+	ID   string
+	Data interface{}
+}
+
+func (q *Queries) UpdateTaskByID(ctx context.Context, arg UpdateTaskByIDParams) (Task, error) {
+	row := q.db.QueryRow(ctx, updateTaskByID, arg.ID, arg.Data)
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Type,
+		&i.Data,
+		&i.Createdat,
 	)
 	return i, err
 }
