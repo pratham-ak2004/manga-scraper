@@ -5,3 +5,5 @@ pdfs/
 Vinland Saga/
 __pycache__
 .env
+.env.*
+data/

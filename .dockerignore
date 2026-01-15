@@ -1,0 +1,5 @@
+server
+__pycache__
+notebook
+.env
+data/

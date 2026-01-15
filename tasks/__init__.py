@@ -1,9 +1,10 @@
 from .base import BaseEventTask
-from .manga import MangaScrapeTask
-from .chapter import ChapterScrapeTask
+from .pipeline import bind_pipeline_tasks
+from .archive import bind_archve_tasks
 from eventprocessor.celery_app import app
 
-app.register_task(MangaScrapeTask())
-app.register_task(ChapterScrapeTask())
 
-__all__ = ["BaseEventTask", "manga", "chapter"]
+bind_pipeline_tasks()
+bind_archve_tasks()
+
+__all__ = ["BaseEventTask"]

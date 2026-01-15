@@ -44,8 +44,6 @@ class Settings:
     
     REDIS_URL = get_env.__func__("REDIS_URL", f"redis://{REDIS_USERNAME + ':' if REDIS_USERNAME else ''}{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}")
     
-    # SELENIUM_HUB_URL = get_env.__func__("SELENIUM_HUB_URL", "http://localhost:4444/wd/hub")
-    
     APPLICATION_NAME = "event-processor"
     LOG_LEVEL = "INFO"
     EVENT_QUEUE = "events"

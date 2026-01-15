@@ -1,12 +1,12 @@
 volumes:
   manga-scraper-rabbitmq-data:
   manga-scraper-redis-data:
-  # manga-scraper-data:
+  manga-scraper-data:
 
-# networks:
-#   public:
-#   internal:
-#     internal: true
+networks:
+  public:
+  internal:
+    internal: true
 
 services:
   postgres:
@@ -18,8 +18,10 @@ services:
       POSTGRES_DB: ${DB_NAME:-manga_scraper}
     ports:
       - "${DB_PORT:-5432}:5432"
-    # expose:
-    #   - "5432"
+    expose:
+      - "5432"
+    networks:
+      - public
     restart: unless-stopped
 
   rabbitmq:
@@ -31,12 +33,20 @@ services:
     ports:
       - "${RABBITMQ_PORT:-5672}:5672"
       - "15672:15672"
-    # expose:
-    #   - 5672
-    #   - 15672
+    expose:
+      - 5672
+      - 15672
+    networks:
+      - public
     volumes:
       - manga-scraper-rabbitmq-data:/var/lib/rabbitmq
+      - manga-scraper-rabbitmq-data:/var/log/rabbitmq
     restart: unless-stopped
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   redis:
     image: redis:8.4
@@ -55,18 +65,67 @@ services:
       - +@all
     ports:
       - "${REDIS_PORT:-6379}:6379"
-    # expose:
-    #   - "6379"
+    expose:
+      - "6379"
+    networks:
+      - public
     volumes:
       - manga-scraper-redis-data:/data
     restart: unless-stopped
 
-  # https://hub.docker.com/r/selenium/standalone-chrome/
-  # selenium-browser:
-  #   image: selenium/standalone-chrome:143.0-20251212
-  #   container_name: manga-scraper-selenium-browser
-  #   ports:
-  #     - "4444:4444"
-  #     - "7900:7900"
-  #   # shm_size: 2g
-  #   restart: unless-stopped
+  server:
+    build:
+      context: ./server
+      dockerfile: dockerfile
+    container_name: manga-scraper-server
+    environment:
+      - RABBITMQ_URL=${RABBITMQ_URL}
+      - REDIS_URL=${REDIS_URL}
+      - DATABASE_URL=${DATABASE_URL}
+    volumes:
+      - manga-scraper-data:/app/data
+    ports:
+      - "8080:8080"
+    expose:
+      - "8080"
+    networks:
+      - public
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+      - worker
+
+  worker:
+    build:
+      context: ./
+      dockerfile: dockerfile
+    environment:
+      - RABBITMQ_URL=${RABBITMQ_URL}
+      - REDIS_URL=${REDIS_URL}
+      - DATABASE_URL=${DATABASE_URL}
+      - RABBITMQ_USERNAME=${RABBITMQ_USERNAME}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_PORT=${RABBITMQ_PORT}
+      - REDIS_USERNAME=${REDIS_USERNAME}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_DB=${REDIS_DB}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=${DB_PORT}
+    volumes:
+      - manga-scraper-data:/app/data
+    networks:
+      - public
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+    depends_on:
+      - rabbitmq
+      - redis

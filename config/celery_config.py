@@ -2,7 +2,6 @@ from .settings import settings
 
 broker_url = f"amqp://{settings.RABBITMQ_USERNAME}:{settings.RABBITMQ_PASSWORD}@{settings.RABBITMQ_HOST}:{settings.RABBITMQ_PORT}/"
 result_backend = f"redis://:{settings.REDIS_PASSWORD}@{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}"
-# result_backend = f"rpc://{settings.RABBITMQ_USERNAME}:{settings.RABBITMQ_PASSWORD}@{settings.RABBITMQ_HOST}:{settings.RABBITMQ_PORT}/"
 
 task_serializer = 'json'
 accept_content = ['json']
@@ -22,4 +21,4 @@ task_store_eager_result = True
 task_track_started = True
 task_send_sent_event = True
 
-worker_concurrency = 1
+worker_concurrency = 4
