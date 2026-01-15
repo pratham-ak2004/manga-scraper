@@ -1,0 +1,33 @@
+# Build Stage
+FROM golang:1.25 AS builder
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+COPY .env.docker .env
+
+RUN apt-get update && apt-get install -y make curl unzip
+
+RUN curl -fsSL https://bun.sh/install | bash
+
+ENV BUN_INSTALL="/root/.bun"
+ENV PATH="/root/.bun/bin:$PATH"
+
+RUN make install
+RUN make build
+RUN CGO_ENABLED=0 GOOS=linux go build -o server cmd/main.go
+
+# Deploy Stage
+FROM ubuntu:24.04
+
+WORKDIR /app
+
+COPY --from=builder /app/server .
+COPY --from=builder /app/.env /app/.env
+COPY --from=builder /app/public ./public
+
+EXPOSE 8080
+CMD [ "./server" ]

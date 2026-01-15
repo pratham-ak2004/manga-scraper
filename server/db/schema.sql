@@ -4,15 +4,17 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TYPE "Status" AS ENUM ('ONGOING', 'COMPLETED', 'UPCOMING');
+CREATE TYPE "TaskType" AS ENUM ('PIPELINE', 'REQUEST');
+CREATE TYPE "ArchiveStatus" AS ENUM ('PENDING', 'COMPLETED', 'FAILED');
 
 CREATE TABLE IF NOT EXISTS Manga (
-    id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(), -- cuid() is not native, use VARCHAR
+    id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
     url TEXT UNIQUE NOT NULL,
-
+    
     title VARCHAR(255),
     status "Status" DEFAULT 'UPCOMING',
     poster TEXT,
-    details JSONB,
+    details JSON,
     description TEXT,
 
     createdAt TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -36,7 +38,10 @@ CREATE INDEX IF NOT EXISTS chapter_number_index ON Chapter(number);
 CREATE TABLE IF NOT EXISTS Page (
     index INT NOT NULL,
     url TEXT UNIQUE NOT NULL,
+    
     altText VARCHAR(255),
+    filePath TEXT NOT NULL,
+    downloadedAt TIMESTAMP(3),
 
     chapterId VARCHAR(36) NOT NULL REFERENCES Chapter(id) ON DELETE CASCADE,
     createdAt TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -45,9 +50,27 @@ CREATE TABLE IF NOT EXISTS Page (
     PRIMARY KEY (index, chapterId)
 );
 
+CREATE TABLE Archive (
+    id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
+    
+    filePath TEXT NOT NULL,
+    startChapter FLOAT DEFAULT 0,
+    endChapter FLOAT DEFAULT 0,
+    status "ArchiveStatus" DEFAULT 'PENDING',
+    complete BOOLEAN DEFAULT FALSE,
+    size BIGINT DEFAULT 0,
+    
+    mangaId VARCHAR(36) NOT NULL REFERENCES Manga(id) ON DELETE CASCADE,
+
+    createdAt TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS Task (
     id TEXT UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
+    type "TaskType" DEFAULT 'REQUEST',
+    data JSON,
 
     createdAt TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -69,6 +92,11 @@ EXECUTE FUNCTION set_current_timestamp();
 
 CREATE TRIGGER updated_at_Chapter_trigger
 BEFORE UPDATE ON Chapter
+FOR EACH ROW
+EXECUTE FUNCTION set_current_timestamp();
+
+CREATE TRIGGER updated_at_Archive_trigger
+BEFORE UPDATE ON Archive
 FOR EACH ROW
 EXECUTE FUNCTION set_current_timestamp();
 
