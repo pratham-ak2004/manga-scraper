@@ -9,23 +9,27 @@ import (
 	"download-server/internal/logger"
 	"download-server/internal/routes"
 	"download-server/internal/server"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func bindAllRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/", routes.GET(handlers.HomePage))
-	mux.HandleFunc("/files", routes.GET(handlers.FilesHandler))
-	mux.HandleFunc("/status", routes.GET(handlers.StatusHandler))
+	mux.Handle("/metrics", promhttp.Handler())
 
-	mux.HandleFunc("/download/", routes.GET(handlers.DownloadHandler))
-	mux.HandleFunc("/directory/", routes.GET(handlers.GetDirectoryContentHTML))
+	mux.HandleFunc("/dashboard", routes.GET(handlers.DashBoardPage))
+	mux.HandleFunc("/dashboard/manga", routes.GET(handlers.MangaListPage))
+	mux.HandleFunc("/dashboard/manga/", routes.GET(handlers.MangaPage))
 
 	mux.HandleFunc("/api/v1/manga", routes.POST(handlers.NewMangaLinkHandler))
 	mux.HandleFunc("/api/v1/chapter", routes.POST(handlers.NewChapterLinkHandler))
+	mux.HandleFunc("/api/v1/archive", routes.POST(handlers.ArchiveMangaHandler))
 
 	assetsFs := http.FileServer(http.Dir("public/assets/"))
 	mux.HandleFunc("/assets/", func(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix("/assets/", assetsFs).ServeHTTP(w, r)
 	})
+
+	mux.HandleFunc("/", routes.GET(handlers.GlobalHandle))
 }
 
 func main() {

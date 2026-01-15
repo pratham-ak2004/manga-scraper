@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"strconv"
+	"sync"
 
 	"download-server/db"
 	"download-server/db/generated"
@@ -18,6 +19,9 @@ type CeleryConn struct {
 	Conn    *amqp.Connection
 	Channel *amqp.Channel
 	Cache   *redis.Client
+
+	QueueLock sync.Mutex
+	CacheLock sync.Mutex
 }
 type CeleryTask struct {
 	ID   string `json:"id"`
@@ -60,6 +64,61 @@ type MangaChapter struct {
 }
 
 type ChapterNumber float64
+
+type ChapterPayload struct {
+	URL string `json:"url"`
+	ID  string `json:"id"`
+}
+
+type ChapterResult struct {
+	URL     string         `json:"url"`
+	Status  string         `json:"status"`
+	Data    []ChapterData  `json:"data"`
+	Payload ChapterPayload `json:"payload"`
+}
+
+type ChapterData struct {
+	Link     string `json:"link"`
+	AltText  string `json:"alt_text"`
+	Index    int    `json:"index"`
+	FilePath string `json:"file_path"`
+}
+
+type PageResult struct {
+	Payload PagePayload `json:"payload"`
+	Status  string      `json:"status"`
+	Data    PageData    `json:"data"`
+}
+
+type PagePayload struct {
+	URL       string `json:"url"`
+	Index     int    `json:"index"`
+	Filepath  string `json:"filepath"`
+	ChapterID string `json:"chapter_id"`
+}
+
+type PageData struct {
+	ReponseCode int    `json:"response_code"`
+	Path        string `json:"file_path"`
+	Size        int64  `json:"file_size"`
+}
+
+type ArchivePayload struct {
+	Manga   generated.Manga                          `json:"manga"`
+	Archive generated.Archive                        `json:"archive"`
+	Pages   []generated.GetPagesByRangeAndMangaIDRow `json:"pages"`
+}
+
+type ArchiveData struct {
+	FilePath string `json:"file_path"`
+	FileSize int64  `json:"file_size"`
+}
+
+type ArchiveResult struct {
+	Payload ArchivePayload `json:"payload"`
+	Status  string         `json:"status"`
+	Data    ArchiveData    `json:"data"`
+}
 
 func (cn *ChapterNumber) UnmarshalJSON(data []byte) error {
 	var s string
@@ -113,14 +172,26 @@ func CreateNewCeleryConnection() {
 	}
 }
 
-func CreateTask(id string, task string) {
+func CreateTask(id string, task string, taskType generated.TaskType) {
 	queries := db.GetDB()
 
 	_, err := queries.CreateTask(context.Background(), generated.CreateTaskParams{
 		ID:   id,
 		Name: task,
+		Type: generated.NullTaskType{TaskType: taskType, Valid: true},
 	})
 	if err != nil {
 		logger.Logger.Println(logger.Colors["blue"] + "Database: " + logger.Colors["red"] + err.Error() + logger.Colors["reset"])
 	}
+}
+
+func UpdateTaskWithData(id string, data []byte) (generated.Task, error) {
+	queries := db.GetDB()
+
+	task, err := queries.UpdateTaskByID(context.Background(), generated.UpdateTaskByIDParams{
+		ID:   id,
+		Data: data,
+	})
+
+	return task, err
 }

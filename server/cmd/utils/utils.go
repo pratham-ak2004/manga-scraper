@@ -4,14 +4,16 @@ package utils
 import (
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
-const BaseDir = "./data"
+const BaseDir = "./data/"
 
 var (
 	status DownloadStatus
@@ -113,4 +115,21 @@ func DownloadImage(url, folder string, idx int) {
 		return
 	}
 	atomic.AddInt32(&status.Completed, 1)
+}
+
+func WithTicker(action func() bool) {
+	waitTime := 5
+	ticker := time.NewTicker(time.Duration(waitTime) * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		completed := action()
+
+		if completed {
+			break
+		} else {
+			waitTime += rand.IntN(5)
+			ticker.Reset(time.Duration(waitTime) * time.Second)
+		}
+	}
 }

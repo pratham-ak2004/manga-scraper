@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"download-server/db"
+	"download-server/db/generated"
 	"download-server/internal/env"
 	"download-server/internal/logger"
 
@@ -18,9 +19,9 @@ import (
 var TaskWaitTime = 5
 
 func (celery *CeleryConn) NewRedisConnection() error {
-	redisUrl := env.GetEnv("REDIS_URL")
+	redisURL := env.GetEnv("REDIS_URL")
 
-	opt, err := redis.ParseURL(redisUrl)
+	opt, err := redis.ParseURL(redisURL)
 	if err != nil {
 		return errors.New("Failed to parse REDIS_URL : " + err.Error())
 	}
@@ -38,11 +39,13 @@ func (celery *CeleryConn) WaitForTaskResult(id string, task string) {
 
 	for range ticker.C {
 		key := fmt.Sprintf("celery-task-meta-%s", id)
+		celery.CacheLock.Lock()
 		val, err := celery.Cache.Get(context.Background(), key).Result()
+		celery.CacheLock.Unlock()
 
 		if err == redis.Nil {
 			// TODO: pending
-			logger.Logger.Println(logger.Colors["yellow"] + "waiting for task : " + id + logger.Colors["reset"])
+			// logger.Logger.Println(logger.Colors["yellow"] + "waiting for task : " + id + logger.Colors["reset"])
 			continue
 		} else if err != nil {
 			logger.Logger.Println(logger.Colors["yellow"] + "Failed to fetch task status " + id + " : " + err.Error() + logger.Colors["reset"])
@@ -53,9 +56,12 @@ func (celery *CeleryConn) WaitForTaskResult(id string, task string) {
 		if err := json.Unmarshal([]byte(val), &data); err != nil {
 			logger.Logger.Println(logger.Colors["yellow"] + "Failed to Unmarshal Task result : " + err.Error() + logger.Colors["reset"])
 		} else if data.Status == "SUCCESS" {
-			err := HandleTaskResult(task, id, data.Result)
+			_, err = UpdateTaskWithData(id, []byte(val))
 			if err == nil {
-				break
+				err = HandleTaskResult(task, id, data)
+				if err == nil {
+					break
+				}
 			}
 		}
 	}
@@ -78,7 +84,7 @@ func (celery *CeleryConn) RemoveTaskResult(id string) {
 func (celery *CeleryConn) WaitForTaskResultAtStartUp() {
 	queries := db.GetDB()
 
-	rows, err := queries.GetAllTask(context.Background())
+	rows, err := queries.GetAllTask(context.Background(), generated.NullTaskType{TaskType: generated.TaskTypePIPELINE, Valid: true})
 	if err != nil && err != sql.ErrNoRows {
 		logger.Logger.Println(logger.Colors["yellow"] + "Failed to fetch existing tasks : " + logger.Colors["reset"])
 	}
