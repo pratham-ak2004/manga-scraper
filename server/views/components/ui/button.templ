@@ -1,0 +1,143 @@
+package ui
+
+type ButtonVariant string
+
+const (
+	ButtonDefault     ButtonVariant = "default"
+	ButtonDestructive ButtonVariant = "destructive"
+	ButtonOutline     ButtonVariant = "outline"
+	ButtonSecondary   ButtonVariant = "secondary"
+	ButtonGhost       ButtonVariant = "ghost"
+	ButtonLink        ButtonVariant = "link"
+)
+
+type ButtonSize string
+
+const (
+	ButtonSizeDefault ButtonSize = "default"
+	ButtonSizeSm      ButtonSize = "sm"
+	ButtonSizeLg      ButtonSize = "lg"
+	ButtonSizeIcon    ButtonSize = "icon"
+	ButtonSizeIconSm  ButtonSize = "icon-sm"
+	ButtonSizeIconLg  ButtonSize = "icon-lg"
+)
+
+type ButtonProps struct {
+	Text      string
+	Type      string        // "button", "submit", "reset"
+	Variant   ButtonVariant
+	Size      ButtonSize
+	Disabled  bool
+	Class     string // Additional custom classes
+	Icon      templ.Component
+	HxPost    string
+	HxGet     string
+	HxTarget  string
+	HxSwap    string
+	HxTrigger string
+}
+
+templ Button(props ButtonProps) {
+	<button
+		type={ getButtonType(props.Type) }
+		class={ getButtonClasses(props) }
+		data-variant={ string(props.Variant) }
+		data-size={ string(props.Size) }
+		if props.Disabled {
+			disabled
+		}
+		if props.HxPost != "" {
+			hx-post={ props.HxPost }
+		}
+		if props.HxGet != "" {
+			hx-get={ props.HxGet }
+		}
+		if props.HxTarget != "" {
+			hx-target={ props.HxTarget }
+		}
+		if props.HxSwap != "" {
+			hx-swap={ props.HxSwap }
+		}
+		if props.HxTrigger != "" {
+			hx-trigger={ props.HxTrigger }
+		}
+	>
+		if props.Icon != nil {
+			<span class="inline-flex items-center justify-center gap-2">
+				@props.Icon
+				if props.Text != "" {
+					<span>{ props.Text }</span>
+				}
+			</span>
+		} else {
+			{ props.Text }
+		}
+        { children... }
+	</button>
+}
+
+func getButtonType(btnType string) string {
+	if btnType == "" {
+		return "button"
+	}
+	return btnType
+}
+
+func getButtonClasses(props ButtonProps) string {
+	// Base classes matching shadcn
+	baseClasses := "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+	
+	// Variant classes
+	variant := props.Variant
+	if variant == "" {
+		variant = ButtonDefault
+	}
+	
+	variantClasses := ""
+	switch variant {
+	case ButtonDefault:
+		variantClasses = "bg-primary text-white hover:bg-primary/90 focus-visible:ring-blue-500/20"
+	case ButtonDestructive:
+		variantClasses = "bg-red-600 text-white hover:bg-red-600/90 focus-visible:ring-red-500/20"
+	case ButtonOutline:
+		variantClasses = "border border-gray-300 bg-white shadow-sm hover:bg-gray-50 hover:text-gray-900 focus-visible:ring-gray-500/20"
+	case ButtonSecondary:
+		variantClasses = "bg-gray-100 text-gray-900 hover:bg-gray-100/80 focus-visible:ring-gray-500/20"
+	case ButtonGhost:
+		variantClasses = "hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-gray-500/20"
+	case ButtonLink:
+		variantClasses = "text-primary underline-offset-4 hover:underline focus-visible:ring-blue-500/20"
+	}
+	
+	// Size classes
+	size := props.Size
+	if size == "" {
+		size = ButtonSizeDefault
+	}
+	
+	sizeClasses := ""
+	switch size {
+	case ButtonSizeDefault:
+		sizeClasses = "h-9 px-4 py-2"
+	case ButtonSizeSm:
+		sizeClasses = "h-8 rounded-md gap-1.5 px-3"
+	case ButtonSizeLg:
+		sizeClasses = "h-10 rounded-md px-6"
+	case ButtonSizeIcon:
+		sizeClasses = "size-9"
+	case ButtonSizeIconSm:
+		sizeClasses = "size-8"
+	case ButtonSizeIconLg:
+		sizeClasses = "size-10"
+	}
+	
+	// Combine all classes
+	classes := baseClasses + " " + variantClasses + " " + sizeClasses
+	
+	if props.Class != "" {
+		classes += " " + props.Class
+	}
+	
+	return classes
+}
+
