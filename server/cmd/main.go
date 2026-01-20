@@ -45,7 +45,7 @@ func main() {
 		logger.Logger.Fatal("Failed to connect to DB: " + err.Error())
 	}
 
-	// go services.Celery.WaitForTaskResultAtStartUp()
+	go services.Celery.WaitForTaskResultAtStartUp()
 
 	mux := server.GetMux()
 	bindAllRoutes(mux)
