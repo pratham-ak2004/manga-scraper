@@ -154,6 +154,15 @@ LEFT JOIN Page p
   ON p.chapterId = c.id
 WHERE m.id = $1;
 
+-- name: DashboardTaskDetails :one
+SELECT 
+    COUNT(*) FILTER (WHERE status = 'PENDING')::INT AS pending_tasks,
+    COUNT(*) FILTER (WHERE status = 'RETRY')::INT AS retry_tasks,
+    COUNT(*) FILTER (WHERE status = 'SUCCESS')::INT AS successful_tasks,
+    COUNT(*) FILTER (WHERE status = 'FAILURE')::INT AS failed_tasks,
+    COUNT(*) FILTER (WHERE status = 'STARTED')::INT AS started_tasks
+FROM Task;
+
 -- name: DeleteTaskByID :one 
 DELETE FROM Task WHERE id = $1 RETURNING *;
 

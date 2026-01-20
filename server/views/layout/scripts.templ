@@ -2,4 +2,14 @@ package layout
 
 templ Scripts() {
 <script src="/assets/js/htmx.min.js"></script>
+<script>
+  // HTMX configuration
+  document.body.addEventListener('htmx:afterSwap', function(evt) {
+    // Re-initialize any dynamic elements after HTMX swaps
+    const themeToggleBtns = evt.detail.target.querySelectorAll('[data-theme-toggle]');
+    themeToggleBtns.forEach(btn => {
+      btn.addEventListener('click', window.toggleTheme);
+    });
+  });
+</script>
 }

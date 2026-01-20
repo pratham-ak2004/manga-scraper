@@ -18,12 +18,15 @@ func bindAllRoutes(mux *http.ServeMux) {
 
 	mux.HandleFunc("/dashboard", routes.GET(handlers.DashBoardPage))
 	mux.HandleFunc("/dashboard/manga", routes.GET(handlers.MangaListPage))
-	mux.HandleFunc("/dashboard/manga/", routes.GET(handlers.MangaPage))
+	mux.HandleFunc("/dashboard/manga/{id}", routes.GET(handlers.MangaPage))
+	mux.HandleFunc("/dashboard/explorer/", routes.GET(handlers.FilesHandler))
+	// TODO: mux.HandleFunc("/manga/read/", routes.GET(handlers.ReadChapter()))
 
 	mux.HandleFunc("/manga/chapters/", routes.GET(handlers.MangaChaptersList))
 	mux.HandleFunc("/manga/archives/", routes.GET(handlers.MangaArchivesList))
 	mux.HandleFunc("/archives/download/", routes.GET(handlers.DownloadHandler))
-	// TODO:: mux.HandleFunc("/manga/read/", routes.GET(handlers.ReadChapter()))
+	mux.HandleFunc("/directory/", routes.GET(handlers.DirectoryList))
+	mux.HandleFunc("/tasks", routes.GET(handlers.TaskDetailsTempl))
 
 	mux.HandleFunc("/api/v1/manga", routes.POST(handlers.NewMangaLinkHandler))
 	mux.HandleFunc("/api/v1/chapter", routes.POST(handlers.NewChapterLinkHandler))
@@ -34,6 +37,7 @@ func bindAllRoutes(mux *http.ServeMux) {
 		http.StripPrefix("/assets/", assetsFs).ServeHTTP(w, r)
 	})
 
+	mux.HandleFunc("/download/", routes.GET(handlers.DownloadHandler))
 	mux.HandleFunc("/", routes.GET(handlers.GlobalHandle))
 }
 

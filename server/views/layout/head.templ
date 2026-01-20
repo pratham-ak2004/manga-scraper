@@ -16,7 +16,12 @@ templ Head() {
   <link rel="manifest" href="/assets/site.webmanifest" />
 
   <meta name="keywords" content="manga weeb otaku" />
+  <meta name="theme-color" content="#3b82f6" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#1e40af" media="(prefers-color-scheme: dark)" />
 
   <link rel="stylesheet" href="/assets/css/index.css" />
+  
+  <!-- Theme script loaded early to prevent flash -->
+  <script src="/assets/js/theme.js"></script>
 </head>
 }

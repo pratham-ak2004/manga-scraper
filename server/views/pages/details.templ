@@ -11,25 +11,25 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
 @layout.DashBoard(manga.Title.String) {
 <!-- Back Button -->
 <div class="mb-6">
-  <a href="/dashboard/manga" class="inline-flex items-center text-gray-600 hover:text-gray-900">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <a href="/dashboard/manga" class="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
     </svg>
-    Back to Manga List
+    <span class="font-medium">Back to Manga List</span>
   </a>
 </div>
 
 <!-- Manga Details Card -->
-<div class="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
+<div class="bg-card rounded-xl border border-border shadow-lg overflow-hidden mb-6">
   <div class="md:flex">
     <!-- Poster Section -->
     <div class="md:w-1/3 lg:w-1/4">
-      <div class="relative h-96 md:h-full bg-gray-200">
+      <div class="relative h-96 md:h-full bg-muted">
         if manga.Poster.Valid && manga.Poster.String != "" {
         <img src={ manga.Poster.String } alt={ manga.Title.String } class="w-full h-full object-cover" />
         } else {
         <div class="w-full h-full flex items-center justify-center">
-          <svg class="w-20 h-20 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-20 h-20 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
@@ -39,11 +39,11 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
         <div class="absolute top-4 right-4">
           if manga.Status.Valid {
           if manga.Status.Status == generated.StatusCOMPLETED {
-          <span class="px-3 py-1 text-sm font-semibold rounded-full bg-green-500 text-white">Completed</span>
+          <span class="px-3 py-1.5 text-sm font-semibold rounded-full bg-success/90 text-success-foreground shadow-lg backdrop-blur-sm border border-success/20">Completed</span>
           } else if manga.Status.Status == generated.StatusONGOING {
-          <span class="px-3 py-1 text-sm font-semibold rounded-full bg-blue-500 text-white">Ongoing</span>
+          <span class="px-3 py-1.5 text-sm font-semibold rounded-full bg-primary/90 text-primary-foreground shadow-lg backdrop-blur-sm border border-primary/20">Ongoing</span>
           } else {
-          <span class="px-3 py-1 text-sm font-semibold rounded-full bg-yellow-500 text-white">Upcoming</span>
+          <span class="px-3 py-1.5 text-sm font-semibold rounded-full bg-warning/90 text-warning-foreground shadow-lg backdrop-blur-sm border border-warning/20">Upcoming</span>
           }
           }
         </div>
@@ -53,37 +53,37 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
     <!-- Info Section -->
     <div class="md:w-2/3 lg:w-3/4 p-6">
       <!-- Title -->
-      <h1 class="text-3xl font-bold text-gray-900 mb-4">
+      <h1 class="text-3xl font-bold text-foreground mb-4">
         if manga.Title.Valid {
         { manga.Title.String }
         } else {
-        <span class="text-gray-400">Untitled</span>
+        <span class="text-muted-foreground">Untitled</span>
         }
       </h1>
 
       <!-- Description -->
       if manga.Description.Valid && manga.Description.String != "" {
       <div class="mb-6">
-        <h2 class="text-lg font-semibold text-gray-800 mb-2">Description</h2>
-        <p class="text-gray-600 leading-relaxed">{ manga.Description.String }</p>
+        <h2 class="text-lg font-semibold text-foreground mb-2">Description</h2>
+        <p class="text-muted-foreground leading-relaxed">{ manga.Description.String }</p>
       </div>
       }
 
 
       <!-- Stats Summary -->
-      <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-white rounded-lg shadow p-4">
-          <p class="text-gray-500 text-sm">Total Chapters</p>
-          <p class="text-2xl font-bold text-gray-800">{ fmt.Sprintf("%d", details.ChapterCount) }</p>
+      <div class="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-background rounded-lg border border-border shadow-sm p-4 hover:shadow-md transition-shadow">
+          <p class="text-muted-foreground text-sm font-medium">Total Chapters</p>
+          <p class="text-2xl font-bold text-foreground mt-1">{ fmt.Sprintf("%d", details.ChapterCount) }</p>
         </div>
-        <div class="bg-white rounded-lg shadow p-4">
-          <p class="text-gray-500 text-sm">Total Pages</p>
-          <p class="text-2xl font-bold text-green-600">{ fmt.Sprintf("%d", details.PageCount) }
+        <div class="bg-background rounded-lg border border-border shadow-sm p-4 hover:shadow-md transition-shadow">
+          <p class="text-muted-foreground text-sm font-medium">Total Pages</p>
+          <p class="text-2xl font-bold text-success mt-1">{ fmt.Sprintf("%d", details.PageCount) }
           </p>
         </div>
-        <div class="bg-white rounded-lg shadow p-4">
-          <p class="text-gray-500 text-sm">Average Pages</p>
-          <p class="text-2xl font-bold text-blue-600">{ fmt.Sprintf("%d", details.AvgPagesPerChapter)}</p>
+        <div class="bg-background rounded-lg border border-border shadow-sm p-4 hover:shadow-md transition-shadow">
+          <p class="text-muted-foreground text-sm font-medium">Average Pages</p>
+          <p class="text-2xl font-bold text-warning mt-1">{ fmt.Sprintf("%d", details.AvgPagesPerChapter)}</p>
         </div>
       </div>
 
@@ -94,12 +94,12 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
         <!-- Author(s) -->
         if authors, ok := details["Author(s)"].([]interface{}); ok && len(authors) > 0 {
         <div>
-          <h3 class="text-sm font-semibold text-gray-700 mb-2">Author(s)</h3>
+          <h3 class="text-sm font-semibold text-foreground mb-2">Author(s)</h3>
           <div class="flex flex-wrap gap-2">
             for _, author := range authors {
             if authorMap, ok := author.(map[string]interface{}); ok {
             if name, ok := authorMap["name"].(string); ok {
-            <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">{ name }</span>
+            <span class="px-3 py-1.5 bg-secondary text-secondary-foreground rounded-lg text-sm font-medium border border-border">{ name }</span>
             }
             }
             }
@@ -110,11 +110,11 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
         <!-- Type -->
         if types, ok := details["Type"].([]interface{}); ok && len(types) > 0 {
         <div>
-          <h3 class="text-sm font-semibold text-gray-700 mb-2">Type</h3>
+          <h3 class="text-sm font-semibold text-foreground mb-2">Type</h3>
           for _, t := range types {
           if typeMap, ok := t.(map[string]interface{}); ok {
           if name, ok := typeMap["name"].(string); ok {
-          <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">{ name }</span>
+          <span class="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium border border-primary/20">{ name }</span>
           }
           }
           }
@@ -124,12 +124,12 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
         <!-- Tags -->
         if tags, ok := details["Tags(s)"].([]interface{}); ok && len(tags) > 0 {
         <div class="md:col-span-2">
-          <h3 class="text-sm font-semibold text-gray-700 mb-2">Tags</h3>
+          <h3 class="text-sm font-semibold text-foreground mb-2">Tags</h3>
           <div class="flex flex-wrap gap-2">
             for _, tag := range tags {
             if tagMap, ok := tag.(map[string]interface{}); ok {
             if name, ok := tagMap["name"].(string); ok {
-            <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">{ name }</span>
+            <span class="px-3 py-1.5 bg-accent text-accent-foreground rounded-lg text-sm font-medium border border-border hover:bg-accent/80 transition-colors">{ name }</span>
             }
             }
             }
@@ -141,7 +141,7 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex gap-3">
+      <div class="flex flex-col sm:flex-row gap-3">
         <a href={ templ.SafeURL(manga.Url) } target="_blank" class="flex-1">
           @ui.Button(ui.ButtonProps{
           Variant: ui.ButtonDefault,
@@ -160,16 +160,16 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
       </div>
 
       <!-- Additional Info -->
-      <div class="mt-6 pt-6 border-t border-gray-200">
-        <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
+      <div class="mt-6 pt-6 border-t border-border">
+        <div class="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
           if manga.Createdat.Valid {
           <div>
-            <span class="font-semibold">Added:</span> { manga.Createdat.Time.Format("Jan 02, 2006") }
+            <span class="font-semibold text-foreground">Added:</span> { manga.Createdat.Time.Format("Jan 02, 2006") }
           </div>
           }
           if manga.Updatedat.Valid {
           <div>
-            <span class="font-semibold">Updated:</span> { manga.Updatedat.Time.Format("Jan 02, 2006") }
+            <span class="font-semibold text-foreground">Updated:</span> { manga.Updatedat.Time.Format("Jan 02, 2006") }
           </div>
           }
         </div>
@@ -179,68 +179,136 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
 </div>
 
 <!-- Create Archive Form -->
-<div class="mb-6 bg-white rounded-lg shadow-lg p-6">
-  <h3 class="text-lg font-semibold text-gray-800 mb-4">Create Archive</h3>
-  <form hx-post={ "/api/v1/archive" } hx-target="#archive-result" hx-swap="innerHTML">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-      <!-- Start Chapter -->
+<div class="mb-6 bg-gradient-to-br from-card to-card/50 rounded-xl border border-border shadow-lg overflow-hidden">
+  <!-- Header with Icon -->
+  <div class="bg-muted/30 border-b border-border px-6 py-4">
+    <div class="flex items-center gap-3">
+      <div class="p-2 bg-primary/10 rounded-lg">
+        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-lg font-semibold text-foreground">Create Archive</h3>
+        <p class="text-sm text-muted-foreground">Generate a downloadable archive from chapter range</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Content -->
+  <div class="p-6">
+    <form hx-post={ "/api/v1/archive" } hx-target="#archive-result" hx-swap="innerHTML">
       <input type="text" value={ manga.ID } hidden name="manga-id" id="manga-id" />
-      <div>
-        <label for="start" class="block text-sm font-medium text-gray-700 mb-1">Start Chapter</label>
-        <input type="number" step="0.1" name="start" id="start" placeholder="0.0"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          required />
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <!-- Start Chapter Input -->
+        <div class="space-y-2">
+          <label for="start" class="flex items-center gap-2 text-sm font-medium text-foreground">
+            <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+            </svg>
+            Start Chapter
+          </label>
+          <div class="relative mt-2">
+            <input type="number" step="0.1" name="start" id="start" placeholder="e.g., 1.0"
+              class="w-full px-4 py-2.5 bg-background border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent text-foreground transition-all hover:border-ring/50"
+              required />
+          </div>
+        </div>
+
+        <!-- End Chapter Input -->
+        <div class="space-y-2">
+          <label for="end" class="flex items-center gap-2 text-sm font-medium text-foreground">
+            <svg class="w-4 h-4 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path>
+            </svg>
+            End Chapter
+          </label>
+          <div class="relative mt-2">
+            <input type="number" step="0.1" name="end" id="end" placeholder="e.g., 10.0"
+              class="w-full px-4 py-2.5 bg-background border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent text-foreground transition-all hover:border-ring/50"
+              required />
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- End Chapter -->
-      <div>
-        <label for="end" class="block text-sm font-medium text-gray-700 mb-1">End Chapter</label>
-        <input type="number" step="0.1" name="end" id="end" placeholder="0.0"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          required />
-      </div>
-
-      <!-- Full Archive Checkbox -->
-      <div class="flex items-end">
-        <label class="flex items-center space-x-2 cursor-pointer">
-          <input type="checkbox" id="full-checkbox"
-            class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-            onchange="document.getElementById('full-hidden').value = this.checked" />
-          <input type="hidden" id="full-hidden" name="full" value="false" />
-          <span class="text-sm font-medium text-gray-700">Full Archive</span>
+      <!-- Full Archive Option -->
+      <div class="mb-6 p-4 bg-accent/5 border border-accent/20 rounded-lg">
+        <label class="flex items-start gap-3 cursor-pointer group">
+          <div class="flex items-center h-6">
+            <input type="checkbox" id="full-checkbox"
+              class="w-5 h-5 text-primary border-input rounded focus:ring-2 focus:ring-ring bg-background cursor-pointer transition-all"
+              onchange="document.getElementById('full-hidden').value = this.checked; toggleFullArchiveInputs(this.checked)" />
+            <input type="hidden" id="full-hidden" name="full" value="false" />
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Full Archive</span>
+              <span class="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded">Recommended</span>
+            </div>
+            <p class="text-xs text-muted-foreground mt-1">Include all available chapters. Start and end values will be ignored.</p>
+          </div>
         </label>
       </div>
 
-      <!-- Submit Button -->
-      <div class="flex items-end">
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row gap-3">
         @ui.Button(ui.ButtonProps{
-        Type: "submit",
-        Variant: ui.ButtonDefault,
-        Size: ui.ButtonSizeLg,
-        Class: "w-full",
+          Type: "submit",
+          Variant: ui.ButtonDefault,
+          Size: ui.ButtonSizeLg,
+          Class: "flex-1 sm:flex-none",
         }) {
-        Create Archive
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z"></path>
+          </svg>
+          Create Archive
         }
+        <button type="reset" class="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground border border-border rounded-lg hover:bg-muted/50 transition-colors">
+          Reset Form
+        </button>
       </div>
-    </div>
 
-    <!-- Result Container -->
-    <div id="archive-result" class="mt-4"></div>
-  </form>
+      <!-- Result Container -->
+      <div id="archive-result" class="mt-6"></div>
+    </form>
+  </div>
 </div>
 
+<!-- Archive Form Script -->
+<script>
+  function toggleFullArchiveInputs(isChecked) {
+    const startInput = document.getElementById('start');
+    const endInput = document.getElementById('end');
+    
+    if (isChecked) {
+      startInput.disabled = true;
+      endInput.disabled = true;
+      startInput.classList.add('opacity-50', 'cursor-not-allowed');
+      endInput.classList.add('opacity-50', 'cursor-not-allowed');
+    } else {
+      startInput.disabled = false;
+      endInput.disabled = false;
+      startInput.classList.remove('opacity-50', 'cursor-not-allowed');
+      endInput.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+  }
+</script>
+
 <!-- Tabs Section -->
-<div class="bg-white rounded-lg shadow-lg overflow-hidden">
+<div class="bg-card rounded-xl border border-border shadow-lg overflow-hidden">
   <!-- Tab Headers -->
-  <div class="border-b border-gray-200">
+  <div class="border-b border-border">
     <nav class="flex -mb-px">
-      <button class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-blue-500 text-blue-600"
+      <button class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-primary text-primary"
         hx-get={ "/manga/chapters/" + manga.ID } hx-target="#tab-content" hx-trigger="click, load"
         onclick="setActiveTab(this)">
         Chapters
       </button>
       <button
-        class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+        class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-foreground hover:border-muted"
         hx-get={ "/manga/archives/" + manga.ID } hx-target="#tab-content" hx-trigger="click"
         onclick="setActiveTab(this)">
         Archives
@@ -252,7 +320,7 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
   <div id="tab-content" class="p-6">
     <!-- Content will be loaded here via HTMX -->
     <div class="flex items-center justify-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
     </div>
   </div>
 </div>
@@ -262,13 +330,13 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
   function setActiveTab(button) {
     // Remove active styles from all buttons
     document.querySelectorAll('.tab-button').forEach(btn => {
-      btn.classList.remove('border-blue-500', 'text-blue-600');
-      btn.classList.add('border-transparent', 'text-gray-500');
+      btn.classList.remove('border-primary', 'text-primary');
+      btn.classList.add('border-transparent', 'text-muted-foreground');
     });
 
     // Add active styles to clicked button
-    button.classList.remove('border-transparent', 'text-gray-500');
-    button.classList.add('border-blue-500', 'text-blue-600');
+    button.classList.remove('border-transparent', 'text-muted-foreground');
+    button.classList.add('border-primary', 'text-primary');
 
     window.location.hash = "tab-content";
     // Optionally, smooth scroll into view

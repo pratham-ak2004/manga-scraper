@@ -1,5 +1,6 @@
 package layout
 
+import ( "download-server/cmd/utils" )
 type DashBoardItem struct {
 Name string
 Path string
@@ -23,44 +24,123 @@ Icon: `
   d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
 `,
 },
+{
+Name: "Explorer",
+Path: "/dashboard/explorer",
+Icon: `
+<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+  d="M12 3l2.25 6.75H21l-5.625 4.125L17.25 21 12 16.875 6.75 21l1.875-7.125L3 9.75h6.75z" />
+`,
+},
 }
 
 templ DashBoard(title string){
 @Index(){
-<div class="flex h-screen bg-gray-100">
+<div class="flex h-screen bg-background">
   <!-- Sidebar -->
-  <aside class="w-64 bg-gray-800 text-white flex flex-col">
+  <aside class="w-64 bg-card border-r border-border flex flex-col shadow-sm hidden lg:flex">
     <!-- Logo/Brand -->
-    <div class="p-4 border-b border-gray-700">
-      <h1 class="text-2xl font-bold">Manga Scraper</h1>
-      <p class="text-sm text-gray-400">Admin Dashboard</p>
+    <div class="p-6 border-b border-border">
+      <h1 class="text-xl font-bold text-foreground">Manga Scraper</h1>
+      <p class="text-sm text-muted-foreground mt-1">Admin Dashboard</p>
     </div>
 
     <!-- Navigation -->
-    <nav class="flex-1 p-4 space-y-2">
+    <nav class="flex-1 p-4 space-y-1">
       for _, item := range DashBoardItems {
       <a href={ templ.SafeURL(item.Path) }
-        class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-700 transition-colors">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors text-muted-foreground hover:text-foreground group">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           @templ.Raw(item.Icon)
         </svg>
         <span>{ item.Name }</span>
       </a>
       }
     </nav>
+
+    <!-- Footer -->
+    <div class="p-4 border-t border-border">
+      <div class="flex items-center justify-between">
+        <span class="text-xs text-muted-foreground">Version { utils.Version }</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Mobile Sidebar Toggle (visible on small screens) -->
+  <button id="mobile-sidebar-toggle"
+    class="lg:hidden fixed bottom-4 right-4 z-50 p-3 bg-primary text-primary-foreground rounded-full shadow-lg hover:shadow-xl transition-shadow"
+    onclick="toggleMobileSidebar()">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  </button>
+
+  <!-- Mobile Sidebar Overlay -->
+  <div id="mobile-sidebar-overlay" class="lg:hidden fixed inset-0 bg-black/50 z-40 hidden"
+    onclick="toggleMobileSidebar()"></div>
+
+  <!-- Mobile Sidebar -->
+  <aside id="mobile-sidebar"
+    class="lg:hidden fixed left-0 top-0 bottom-0 w-64 bg-card border-r border-border flex flex-col shadow-2xl z-50 transform -translate-x-full transition-transform duration-300">
+    <!-- Logo/Brand -->
+    <div class="p-6 border-b border-border flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-bold text-foreground">Manga Scraper</h1>
+        <p class="text-sm text-muted-foreground mt-1">Admin Dashboard</p>
+      </div>
+      <button onclick="toggleMobileSidebar()" class="p-2 hover:bg-accent rounded-lg">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 p-4 space-y-1">
+      for _, item := range DashBoardItems {
+      <a href={ templ.SafeURL(item.Path) }
+        class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors text-muted-foreground hover:text-foreground"
+        onclick="toggleMobileSidebar()">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          @templ.Raw(item.Icon)
+        </svg>
+        <span>{ item.Name }</span>
+      </a>
+      }
+    </nav>
+
+    <!-- Footer -->
+    <div class="p-4 border-t border-border">
+      <div class="flex items-center justify-between">
+        <span class="text-xs text-muted-foreground">Version { utils.Version }</span>
+      </div>
+    </div>
   </aside>
 
   <!-- Main Content Area -->
-  <div class="flex-1 flex flex-col overflow-hidden">
+  <div class="flex-1 flex flex-col overflow-hidden min-w-0">
     <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200 p-4">
+    <header class="bg-card shadow-sm border-b border-border px-4 py-4 sm:px-6">
       <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-semibold text-gray-800">{ title }</h2>
-        <div class="flex items-center space-x-4">
-          <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex items-center gap-4 min-w-0">
+          <button onclick="toggleMobileSidebar()"
+            class="lg:hidden p-2 hover:bg-accent rounded-lg transition-colors flex-shrink-0">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <h2 class="text-xl sm:text-2xl font-semibold text-foreground truncate">{ title }</h2>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <!-- Theme Toggle Button -->
+          <button data-theme-toggle class="p-2 hover:bg-accent rounded-lg transition-colors" aria-label="Toggle theme">
+            <svg class="w-5 h-5 theme-icon-sun hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <svg class="w-5 h-5 theme-icon-moon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
             </svg>
           </button>
         </div>
@@ -68,12 +148,24 @@ templ DashBoard(title string){
     </header>
 
     <!-- Page Content -->
-    <main class="flex-1 overflow-y-auto bg-gray-50 p-6">
+    <main class="flex-1 overflow-y-auto bg-background p-4 sm:p-6">
       <div class="max-w-7xl mx-auto">
         { children... }
       </div>
     </main>
   </div>
 </div>
+
+<script>
+  function toggleMobileSidebar() {
+    const sidebar = document.getElementById('mobile-sidebar');
+    const overlay = document.getElementById('mobile-sidebar-overlay');
+
+    if (sidebar && overlay) {
+      sidebar.classList.toggle('-translate-x-full');
+      overlay.classList.toggle('hidden');
+    }
+  }
+</script>
 }
 }

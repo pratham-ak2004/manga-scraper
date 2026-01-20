@@ -228,6 +228,37 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 	return i, err
 }
 
+const dashboardTaskDetails = `-- name: DashboardTaskDetails :one
+SELECT 
+    COUNT(*) FILTER (WHERE status = 'PENDING')::INT AS pending_tasks,
+    COUNT(*) FILTER (WHERE status = 'RETRY')::INT AS retry_tasks,
+    COUNT(*) FILTER (WHERE status = 'SUCCESS')::INT AS successful_tasks,
+    COUNT(*) FILTER (WHERE status = 'FAILURE')::INT AS failed_tasks,
+    COUNT(*) FILTER (WHERE status = 'STARTED')::INT AS started_tasks
+FROM Task
+`
+
+type DashboardTaskDetailsRow struct {
+	PendingTasks    int32
+	RetryTasks      int32
+	SuccessfulTasks int32
+	FailedTasks     int32
+	StartedTasks    int32
+}
+
+func (q *Queries) DashboardTaskDetails(ctx context.Context) (DashboardTaskDetailsRow, error) {
+	row := q.db.QueryRow(ctx, dashboardTaskDetails)
+	var i DashboardTaskDetailsRow
+	err := row.Scan(
+		&i.PendingTasks,
+		&i.RetryTasks,
+		&i.SuccessfulTasks,
+		&i.FailedTasks,
+		&i.StartedTasks,
+	)
+	return i, err
+}
+
 const deleteTaskByID = `-- name: DeleteTaskByID :one
 DELETE FROM Task WHERE id = $1 RETURNING id, name, type, status, data, createdat, updatedat
 `

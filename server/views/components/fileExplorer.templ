@@ -1,0 +1,261 @@
+package components
+
+import (
+	"strings"
+    "fmt"
+	utils "download-server/cmd/utils"
+)
+
+// FileIcon returns an appropriate emoji icon based on file type
+func getFileIcon(item utils.FileItem) string {
+	if item.IsDir {
+		return "📁"
+	}
+	
+	ext := strings.ToLower(item.Icon)
+	switch ext {
+	case "image":
+		return "🖼️"
+	case "archive":
+		return "📦"
+	case "pdf":
+		return "📄"
+	case "video":
+		return "🎬"
+	case "audio":
+		return "🎵"
+	case "code":
+		return "💻"
+	case "document":
+		return "📝"
+	default:
+		return "📄"
+	}
+}
+
+templ FileExplorerBreadcrumb(breadcrumbs []utils.Breadcrumb) {
+	<nav class="flex items-center space-x-2 text-sm mb-6">
+		<!-- Home Icon -->
+		<a href="/dashboard/explorer/" class="flex items-center space-x-1 text-primary hover:text-primary/80 transition-colors">
+			<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+				<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path>
+			</svg>
+			<span>Home</span>
+		</a>
+
+		<!-- Breadcrumb Items -->
+		for _, crumb := range breadcrumbs {
+			<span class="text-muted-foreground">/</span>
+			if crumb.Path != "" {
+				<a href={ templ.SafeURL("/dashboard/explorer/" + crumb.Path) } class="text-primary hover:text-primary/80 transition-colors">
+					{ crumb.Name }
+				</a>
+			} else {
+				<span class="text-foreground font-medium">{ crumb.Name }</span>
+			}
+		}
+	</nav>
+}
+
+templ FileListItem(item utils.FileItem, idx int) {
+    if !item.IsHidden {
+        <div class="group bg-secondary border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors cursor-pointer">
+            <!-- Item Header -->
+            <div class="flex items-start justify-between gap-3">
+                <!-- Icon and Name -->
+                <div class="flex items-start gap-3 min-w-0 flex-1">
+                    <span class="text-2xl flex-shrink-0 mt-1">{ getFileIcon(item) }</span>
+                    <div class="min-w-0 flex-1">
+                        if item.IsDir {
+                            <!-- button
+                                hx-get={ "/directory/" + item.Path }
+                                hx-target="#files-container"
+                                hx-swap="outerHTML"
+                                class="font-medium text-foreground hover:text-primary transition-colors truncate block text-left w-full">
+                                { item.Name }
+                            </button !-->
+                            <a 
+                                href={ "/dashboard/explorer/" + item.Path }
+                                class="font-medium text-foreground hover:text-primary transition-colors truncate block text-left w-full">
+                                { item.Name }
+                            </a>
+                        } else {
+                            <a href={ templ.SafeURL("/download/" + item.Path) } class="font-medium text-foreground hover:text-primary transition-colors truncate block">
+                                { item.Name }
+                            </a>
+                        }
+                        <p class="text-xs text-muted-foreground mt-1">
+                            if !item.IsDir {
+                                { utils.FormatSize(item.Size, false) }
+                            } else {
+                                <span>Directory</span>
+                            }
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                    if !item.IsDir {
+                        <a href={ templ.SafeURL("/download/" + item.Path) } title="Download"
+                            class="p-2 hover:bg-background rounded transition-colors text-primary hover:text-primary/80">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                        </a>
+                    }
+                </div>
+            </div>
+
+            <!-- Metadata Footer -->
+            <div class="mt-3 pt-3 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
+                <span>{ item.Modified.Format("Jan 02, 2006") }</span>
+                if item.IsDir {
+                    <span class="text-primary/60">Folder</span>
+                }
+            </div>
+        </div>
+    }
+}
+
+templ FileExplorerGrid(data utils.FileExplorerData) {
+	<div id="files-container" class="w-full">
+		<!-- Header Section -->
+		<div class="mb-6">
+			<!-- h1 class="text-3xl font-bold text-foreground mb-2"></h1 -->
+			<p class="text-muted-foreground">
+				if data.CurrentPath == "/" {
+					Root directory
+				} else {
+					{ data.CurrentPath }
+				}
+			</p>
+		</div>
+
+        if len(data.Items) != 0 {
+            <!-- Stats -->
+			<div class="bg-card border border-border rounded-lg p-4 mb-4">
+				<div class="grid grid-cols-3 gap-4">
+					<div>
+						<p class="text-sm text-muted-foreground">Total Items</p>
+						<p class="text-2xl font-bold text-foreground">{ fmt.Sprintf("%d", data.TotalItems) }</p>
+					</div>
+					<div>
+						<p class="text-sm text-muted-foreground">Total Size</p>
+						<p class="text-2xl font-bold text-foreground">{ utils.FormatSize(data.TotalSize, false) }</p>
+					</div>
+					<div>
+						<p class="text-sm text-muted-foreground">Type</p>
+						<p class="text-2xl font-bold text-foreground">
+							if data.CurrentPath == "/" {
+								Root
+							} else {
+								Folder
+							}
+						</p>
+					</div>
+				</div>
+			</div>
+        }
+
+		<!-- Breadcrumb Navigation -->
+		@FileExplorerBreadcrumb(data.Breadcrumbs)
+
+		<!-- Empty State -->
+		if len(data.Items) == 0 {
+			<div class="flex flex-col items-center justify-center py-16 bg-muted/30 rounded-lg border-2 border-dashed border-border">
+				<svg class="w-16 h-16 text-muted-foreground/40 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+				</svg>
+				<h3 class="text-lg font-semibold text-muted-foreground mb-1">Empty Directory</h3>
+				<p class="text-sm text-muted-foreground">No files or folders in this location</p>
+			</div>
+		} else {
+			<!-- File Grid -->
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+				for idx, item := range data.Items {
+					@FileListItem(item, idx)
+				}
+			</div>
+		}
+	</div>
+}
+
+templ FileExplorerList(data utils.FileExplorerData) {
+	<!-- Alternative list view - for future use -->
+	<div id="files-container" class="w-full">
+		<!-- Header Section -->
+		<div class="mb-6">
+			<h1 class="text-3xl font-bold text-foreground mb-2">File Explorer</h1>
+		</div>
+
+		<!-- Breadcrumb Navigation -->
+		@FileExplorerBreadcrumb(data.Breadcrumbs)
+
+		<!-- Files Table -->
+		<div class="bg-card border border-border rounded-lg overflow-hidden">
+			<!-- Table Header -->
+			<div class="grid grid-cols-12 gap-4 bg-muted/50 border-b border-border px-6 py-3 text-sm font-semibold text-foreground">
+				<div class="col-span-6">Name</div>
+				<div class="col-span-2">Modified</div>
+				<div class="col-span-2">Size</div>
+				<div class="col-span-2">Actions</div>
+			</div>
+
+			<!-- Table Body -->
+			if len(data.Items) == 0 {
+				<div class="px-6 py-8 text-center text-muted-foreground">
+					<p>No files or folders in this location</p>
+				</div>
+			} else {
+				for _, item := range data.Items {
+					<div class="grid grid-cols-12 gap-4 border-b border-border px-6 py-4 text-sm items-center hover:bg-muted/30 transition-colors">
+						<!-- Name Column -->
+						<div class="col-span-6 flex items-center gap-3 min-w-0">
+							<span class="text-lg flex-shrink-0">{ getFileIcon(item) }</span>
+							if item.IsDir {
+								<button
+									hx-get={ "/directory" + item.Path }
+									hx-target="#files-container"
+									hx-swap="outerHTML"
+									class="text-primary hover:text-primary/80 truncate transition-colors">
+									{ item.Name }
+								</button>
+							} else {
+								<a href={ templ.SafeURL("/download" + item.Path) } class="text-foreground hover:text-primary truncate transition-colors">
+									{ item.Name }
+								</a>
+							}
+						</div>
+
+						<!-- Modified Column -->
+						<div class="col-span-2 text-muted-foreground text-xs">
+							{ item.Modified.Format("Jan 02") }
+						</div>
+
+						<!-- Size Column -->
+						<div class="col-span-2 text-muted-foreground text-xs">
+							if !item.IsDir {
+								{ utils.FormatSize(item.Size, false) }
+							} else {
+								<span>-</span>
+							}
+						</div>
+
+						<!-- Actions Column -->
+						<div class="col-span-2 flex items-center gap-2">
+							if !item.IsDir {
+								<a href={ templ.SafeURL("/download" + item.Path) } title="Download"
+									class="p-1 hover:bg-background rounded transition-colors text-primary hover:text-primary/80">
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+									</svg>
+								</a>
+							}
+						</div>
+					</div>
+				}
+			}
+		</div>
+	</div>
+}

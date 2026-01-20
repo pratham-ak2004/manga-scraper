@@ -3,22 +3,24 @@ package pages
 import (
 "download-server/views/layout"
 "download-server/cmd/utils"
+"download-server/db/generated"
+"download-server/views/components"
 "fmt"
 )
 
-templ Home(data utils.DashBoardData) {
+templ Home(data utils.DashBoardData, taskDetails generated.DashboardTaskDetailsRow) {
 @layout.DashBoard("Dashboard"){
 <!-- Stats Grid -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
   <!-- Total Manga Card -->
-  <div class="bg-white rounded-lg shadow p-6">
+  <div class="bg-card rounded-xl border border-border shadow-sm p-6 hover:shadow-md transition-all group">
     <div class="flex items-center justify-between">
       <div>
-        <p class="text-gray-500 text-sm font-medium">Total Manga</p>
-        <p class="text-3xl font-bold text-gray-800 mt-2">{ fmt.Sprintf("%d", data.Total.Manga) }</p>
+        <p class="text-muted-foreground text-sm font-medium">Total Manga</p>
+        <p class="text-3xl font-bold text-primary mt-2">{ fmt.Sprintf("%d", data.Total.Manga) }</p>
       </div>
-      <div class="bg-blue-100 p-3 rounded-full">
-        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="bg-primary/10 p-3 rounded-lg group-hover:bg-primary/15 transition-colors">
+        <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
         </svg>
@@ -27,14 +29,14 @@ templ Home(data utils.DashBoardData) {
   </div>
 
   <!-- Total Chapters Card -->
-  <div class="bg-white rounded-lg shadow p-6">
+  <div class="bg-card rounded-xl border border-border shadow-sm p-6 hover:shadow-md transition-all group">
     <div class="flex items-center justify-between">
       <div>
-        <p class="text-gray-500 text-sm font-medium">Total Chapters</p>
-        <p class="text-3xl font-bold text-gray-800 mt-2">{ fmt.Sprintf("%d", data.Total.Chapter) }</p>
+        <p class="text-muted-foreground text-sm font-medium">Total Chapters</p>
+        <p class="text-3xl font-bold text-success mt-2">{ fmt.Sprintf("%d", data.Total.Chapter) }</p>
       </div>
-      <div class="bg-green-100 p-3 rounded-full">
-        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="bg-success/10 p-3 rounded-lg group-hover:bg-success/15 transition-colors">
+        <svg class="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
@@ -43,14 +45,14 @@ templ Home(data utils.DashBoardData) {
   </div>
 
   <!-- Total Pages Card -->
-  <div class="bg-white rounded-lg shadow p-6">
+  <div class="bg-card rounded-xl border border-border shadow-sm p-6 hover:shadow-md transition-all group">
     <div class="flex items-center justify-between">
       <div>
-        <p class="text-gray-500 text-sm font-medium">Total Pages</p>
-        <p class="text-3xl font-bold text-gray-800 mt-2">{ fmt.Sprintf("%d", data.Total.Pages) }</p>
+        <p class="text-muted-foreground text-sm font-medium">Total Pages</p>
+        <p class="text-3xl font-bold text-warning mt-2">{ fmt.Sprintf("%d", data.Total.Pages) }</p>
       </div>
-      <div class="bg-purple-100 p-3 rounded-full">
-        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="bg-warning/10 p-3 rounded-lg group-hover:bg-warning/15 transition-colors">
+        <svg class="w-6 h-6 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
         </svg>
@@ -60,76 +62,85 @@ templ Home(data utils.DashBoardData) {
 </div>
 
 <!-- Status Overview -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-  <div class="bg-white rounded-lg shadow p-6">
-    <div class="flex items-center justify-between mb-2">
-      <h3 class="text-lg font-semibold text-gray-800">Completed</h3>
-      <span class="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">
-        { fmt.Sprintf("%d", data.Status.Completed) }
-      </span>
-    </div>
-    <div class="w-full bg-gray-200 rounded-full h-2">
-      <div class="bg-green-600 h-2 rounded-full" style={ fmt.Sprintf("width: %d%%",
-        calculatePercentage(data.Status.Completed, data.Total.Manga)) }></div>
-    </div>
-  </div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
 
-  <div class="bg-white rounded-lg shadow p-6">
-    <div class="flex items-center justify-between mb-2">
-      <h3 class="text-lg font-semibold text-gray-800">Ongoing</h3>
-      <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
+  <div class="bg-card rounded-xl border border-primary/20 shadow-sm p-6 hover:shadow-md transition-all group">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-foreground">Ongoing</h3>
+      <span class="bg-primary/20 text-primary text-sm font-semibold px-2.5 py-1 rounded-lg">
         { fmt.Sprintf("%d", data.Status.Ongoing) }
       </span>
     </div>
-    <div class="w-full bg-gray-200 rounded-full h-2">
-      <div class="bg-blue-600 h-2 rounded-full" style={ fmt.Sprintf("width: %d%%",
+    <div class="w-full bg-primary/10 rounded-full h-3 overflow-hidden">
+      <div class="bg-gradient-to-r from-primary to-primary/70 h-3 rounded-full transition-all duration-500 ease-out" style={ fmt.Sprintf("width: %d%%",
         calculatePercentage(data.Status.Ongoing, data.Total.Manga)) }></div>
     </div>
+    <p class="text-xs text-muted-foreground mt-2">{ fmt.Sprintf("%d%%", calculatePercentage(data.Status.Ongoing, data.Total.Manga)) } of total manga</p>
   </div>
 
-  <div class="bg-white rounded-lg shadow p-6">
-    <div class="flex items-center justify-between mb-2">
-      <h3 class="text-lg font-semibold text-gray-800">Upcoming</h3>
-      <span class="bg-yellow-100 text-yellow-800 text-sm font-medium px-3 py-1 rounded-full">
+  <div class="bg-card rounded-xl border border-success/20 shadow-sm p-6 hover:shadow-md transition-all group">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-foreground">Completed</h3>
+      <span class="bg-success/20 text-success text-sm font-semibold px-2.5 py-1 rounded-lg">
+        { fmt.Sprintf("%d", data.Status.Completed) }
+      </span>
+    </div>
+    <div class="w-full bg-success/10 rounded-full h-3 overflow-hidden">
+      <div class="bg-gradient-to-r from-success to-success/70 h-3 rounded-full transition-all duration-500 ease-out" style={ fmt.Sprintf("width: %d%%",
+        calculatePercentage(data.Status.Completed, data.Total.Manga)) }></div>
+    </div>
+    <p class="text-xs text-muted-foreground mt-2">{ fmt.Sprintf("%d%%", calculatePercentage(data.Status.Completed, data.Total.Manga)) } of total manga</p>
+  </div>
+
+  <div class="bg-card rounded-xl border border-warning/20 shadow-sm p-6 hover:shadow-md transition-all group">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-foreground">Upcoming</h3>
+      <span class="bg-warning/20 text-warning text-sm font-semibold px-2.5 py-1 rounded-lg">
         { fmt.Sprintf("%d", data.Status.Upcoming) }
       </span>
     </div>
-    <div class="w-full bg-gray-200 rounded-full h-2">
-      <div class="bg-yellow-600 h-2 rounded-full" style={ fmt.Sprintf("width: %d%%",
+    <div class="w-full bg-warning/10 rounded-full h-3 overflow-hidden">
+      <div class="bg-gradient-to-r from-warning to-warning/70 h-3 rounded-full transition-all duration-500 ease-out" style={ fmt.Sprintf("width: %d%%",
         calculatePercentage(data.Status.Upcoming, data.Total.Manga)) }></div>
     </div>
+    <p class="text-xs text-muted-foreground mt-2">{ fmt.Sprintf("%d%%", calculatePercentage(data.Status.Upcoming, data.Total.Manga)) } of total manga</p>
   </div>
 </div>
 
+<!-- Task Overview -->
+<div  hx-get="/tasks" hx-trigger="every 10s" hx-swap="innerHTML">
+  @components.TaskDetails(taskDetails)
+</div>
+
 <!-- Recent Manga List -->
-<div class="bg-white rounded-lg shadow">
-  <div class="p-6 border-b border-gray-200">
-    <h3 class="text-xl font-semibold text-gray-800">Recent Manga</h3>
+<div class="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+  <div class="p-6 border-b border-border">
+    <h3 class="text-xl font-semibold text-foreground">Recent Manga</h3>
   </div>
   <div class="overflow-x-auto">
     <table class="w-full">
-      <thead class="bg-gray-50 border-b border-gray-200">
+      <thead class="bg-muted/50 border-b border-border">
         <tr>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Poster</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chapters</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pages</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Poster</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Title</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Chapters</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Pages</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Last Updated</th>
         </tr>
       </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
+      <tbody class="divide-y divide-border">
         for _, manga := range data.Manga {
-        <tr class="hover:bg-gray-50 transition-colors">
+        <tr class="hover:bg-muted/50 transition-colors">
           <td class="px-6 py-4">
             <div class="flex-shrink-0 h-24 w-16">
               if manga.Poster.Valid && manga.Poster.String != "" {
               <a href={ manga.Poster.String } target="_blank" rel="noreferrer">
-                <img class="h-24 w-16 object-cover rounded shadow-sm" src={ manga.Poster.String } alt="Manga poster" />
+                <img class="h-24 w-16 object-cover rounded-lg shadow-sm border border-border" src={ manga.Poster.String } alt="Manga poster" />
               </a>
               } else {
-              <div class="h-24 w-16 bg-gray-200 rounded flex items-center justify-center">
-                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="h-24 w-16 bg-muted rounded-lg flex items-center justify-center border border-border">
+                <svg class="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -138,48 +149,48 @@ templ Home(data utils.DashBoardData) {
             </div>
           </td>
           <td class="px-6 py-4">
-            <div class="text-sm font-medium text-gray-900">
-              <a href={ templ.SafeURL("/dashboard/manga/" + manga.MangaID) } class="underline">
+            <div class="text-sm font-medium text-foreground">
+              <a href={ templ.SafeURL("/dashboard/manga/" + manga.MangaID) } class="hover:text-primary transition-colors hover:underline">
                 if manga.Title.Valid {
                 { manga.Title.String }
                 } else {
-                <span class="text-gray-400">Untitled</span>
+                <span class="text-muted-foreground">Untitled</span>
                 }
               </a>
             </div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm text-gray-900">{ fmt.Sprintf("%d", manga.TotalChapters) }</div>
+            <div class="text-sm text-foreground">{ fmt.Sprintf("%d", manga.TotalChapters) }</div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm text-gray-900">{ fmt.Sprintf("%d", manga.TotalPages) }</div>
+            <div class="text-sm text-foreground">{ fmt.Sprintf("%d", manga.TotalPages) }</div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             if manga.Status.Valid {
             if manga.Status.Status == "COMPLETED" {
-            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+            <span class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-success/10 text-success border border-success/20">
               Completed
             </span>
             } else if manga.Status.Status == "ONGOING" {
-            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+            <span class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary/10 text-primary border border-primary/20">
               Ongoing
             </span>
             } else {
-            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+            <span class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-warning/10 text-warning border border-warning/20">
               Upcoming
             </span>
             }
             } else {
-            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+            <span class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-muted text-muted-foreground border border-border">
               Unknown
             </span>
             }
           </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
             if manga.MangaUpdatedAt.Valid {
             { manga.MangaUpdatedAt.Time.Format("Jan 02, 2006") }
             } else {
-            <span class="text-gray-400">-</span>
+            <span class="text-muted-foreground/50">-</span>
             }
           </td>
         </tr>

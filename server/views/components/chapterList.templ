@@ -8,76 +8,76 @@ import (
 templ ChaptersList(chapters []generated.Chapter) {
 if len(chapters) == 0 {
 <div class="text-center py-12">
-  <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <svg class="mx-auto h-12 w-12 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
       d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
   </svg>
-  <h3 class="mt-2 text-lg font-medium text-gray-900">No chapters found</h3>
-  <p class="mt-1 text-gray-500">This manga doesn't have any chapters yet.</p>
+  <h3 class="mt-2 text-lg font-medium text-foreground">No chapters found</h3>
+  <p class="mt-1 text-muted-foreground">This manga doesn't have any chapters yet.</p>
 </div>
 } else {
-<div class="overflow-x-auto">
-  <table class="min-w-full divide-y divide-gray-200">
-    <thead class="bg-gray-50">
+<div class="overflow-x-auto rounded-xl border border-border">
+  <table class="min-w-full divide-y divide-border">
+    <thead class="bg-muted/50">
       <tr>
-        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
           Chapter
         </th>
-        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
           Added
         </th>
-        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
           Updated
         </th>
-        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
           Actions
         </th>
       </tr>
     </thead>
-    <tbody class="bg-white divide-y divide-gray-200">
+    <tbody class="bg-card divide-y divide-border">
       for _, chapter := range chapters {
-      <tr class="hover:bg-gray-50 transition-colors">
+      <tr class="hover:bg-muted/50 transition-colors">
         <td class="px-6 py-4 whitespace-nowrap">
-          <a href={ "/manga/read/" + chapter.ID } class="flex items-center">
-            <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-blue-100 rounded-lg">
-              <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <a href={ "/manga/read/" + chapter.ID } class="flex items-center gap-3 group">
+            <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+              <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
             </div>
-            <div class="ml-4">
-              <div class="text-sm font-medium text-gray-900">
+            <div>
+              <div class="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
                 Chapter { fmt.Sprintf("%.1f", chapter.Number) }
               </div>
-              <div class="text-sm text-gray-500">
+              <div class="text-xs text-muted-foreground">
                 ID: { chapter.ID[:8] }...
               </div>
             </div>
           </a>
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
-          <div class="text-sm text-gray-900">
+          <div class="text-sm text-foreground">
             if chapter.Createdat.Valid {
             { chapter.Createdat.Time.Format("Jan 02, 2006") }
             } else {
-            <span class="text-gray-400">N/A</span>
+            <span class="text-muted-foreground">N/A</span>
             }
           </div>
-          <div class="text-xs text-gray-500">
+          <div class="text-xs text-muted-foreground">
             if chapter.Createdat.Valid {
             { chapter.Createdat.Time.Format("3:04 PM") }
             }
           </div>
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
-          <div class="text-sm text-gray-900">
+          <div class="text-sm text-foreground">
             if chapter.Updatedat.Valid {
             { chapter.Updatedat.Time.Format("Jan 02, 2006") }
             } else {
-            <span class="text-gray-400">N/A</span>
+            <span class="text-muted-foreground">N/A</span>
             }
           </div>
-          <div class="text-xs text-gray-500">
+          <div class="text-xs text-muted-foreground">
             if chapter.Updatedat.Valid {
             { chapter.Updatedat.Time.Format("3:04 PM") }
             }
@@ -86,7 +86,7 @@ if len(chapters) == 0 {
         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
           <div class="flex items-center justify-end space-x-3">
             <a href={ templ.SafeURL(chapter.Url) } target="_blank"
-              class="text-blue-600 hover:text-blue-900 inline-flex items-center" title="View Source">
+              class="text-primary hover:text-primary/80 inline-flex items-center transition-colors" title="View Source">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -100,9 +100,9 @@ if len(chapters) == 0 {
   </table>
 </div>
 <!-- Summary Footer -->
-<div class="mt-4 px-6 py-3 bg-gray-50 border-t border-gray-200 rounded-b-lg">
-  <p class="text-sm text-gray-600">
-    Showing <span class="font-medium text-gray-900">{ fmt.Sprintf("%d", len(chapters)) }</span> chapters
+<div class="mt-4 px-6 py-3 bg-muted/30 border-t border-border rounded-b-xl">
+  <p class="text-sm text-muted-foreground">
+    Showing <span class="font-medium text-foreground">{ fmt.Sprintf("%d", len(chapters)) }</span> chapters
   </p>
 </div>
 }

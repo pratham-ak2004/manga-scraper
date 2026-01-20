@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"mime"
 	"net/http"
@@ -14,7 +13,6 @@ import (
 	"download-server/db"
 	"download-server/db/generated"
 	"download-server/internal/logger"
-	"download-server/views/components"
 	"download-server/views/pages"
 )
 
@@ -62,7 +60,12 @@ func DashBoardPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = pages.Home(payload).Render(r.Context(), w)
+	taskDetails, err := queries.DashboardTaskDetails(context.Background())
+	if err != nil {
+		taskDetails = generated.DashboardTaskDetailsRow{}
+	}
+
+	err = pages.Home(payload, taskDetails).Render(r.Context(), w)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -119,82 +122,23 @@ func MangaPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func MangaChaptersList(w http.ResponseWriter, r *http.Request) {
-	id := strings.TrimPrefix(r.URL.String(), "/manga/chapters/")
-	if id == "" {
-		http.Error(w, "Invalid Manga ID", http.StatusBadRequest)
-		return
-	}
-
-	queries := db.GetDB()
-
-	chapters, err := queries.GetChaptersByMangaID(context.Background(), id)
-	if err != nil && err.Error() != "no rows in result set" {
-		http.Error(w, "Failed to fetch chapters from DB"+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if err != nil && err.Error() == "no rows in result set" {
-		err = pages.NotFound().Render(r.Context(), w)
-		if err != nil {
-			http.Error(w, "Failed to generate Not Found page", http.StatusInternalServerError)
-			return
-		}
-	}
-
-	err = components.ChaptersList(chapters).Render(r.Context(), w)
-	if err != nil {
-		http.Error(w, "Failed to generate Not Found page", http.StatusInternalServerError)
-	}
-}
-
-func MangaArchivesList(w http.ResponseWriter, r *http.Request) {
-	id := strings.TrimPrefix(r.URL.String(), "/manga/archives/")
-	if id == "" {
-		http.Error(w, "Invalid Manga ID", http.StatusBadRequest)
-		return
-	}
-
-	queries := db.GetDB()
-
-	archives, err := queries.GetArchivesByMangaID(context.Background(), id)
-	if err != nil && err.Error() != "no rows in result set" {
-		http.Error(w, "Failed to fetch chapters from DB", http.StatusInternalServerError)
-		return
-	}
-	if err != nil && err.Error() == "no rows in result set" {
-		err = pages.NotFound().Render(r.Context(), w)
-		if err != nil {
-			http.Error(w, "Failed to generate Not Found page", http.StatusInternalServerError)
-			return
-		}
-	}
-
-	err = components.ArchivesList(archives).Render(r.Context(), w)
-	if err != nil {
-		http.Error(w, "Failed to generate Not Found page", http.StatusInternalServerError)
-	}
-}
-
 func FilesHandler(w http.ResponseWriter, r *http.Request) {
-	resPath := strings.TrimPrefix(r.URL.Path, "/files")
+	resPath := strings.TrimPrefix(r.URL.Path, "/dashboard/explorer/")
 	directoryItems, err := utils.GetFolderContent(resPath)
 	if err != nil {
 		logger.Logger.Println(logger.Colors["red"] + err.Error() + logger.Colors["reset"])
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	err = pages.Files(directoryItems, "/").Render(r.Context(), w)
+	err = pages.Files(directoryItems).Render(r.Context(), w)
 	if err != nil {
 		logger.Logger.Println(logger.Colors["red"] + err.Error() + logger.Colors["reset"])
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
-func StatusHandler(w http.ResponseWriter, r *http.Request) {
-}
-
 func DownloadHandler(w http.ResponseWriter, r *http.Request) {
-	reqPath := strings.TrimPrefix(r.URL.Path, "/archives/download/")
+	reqPath := strings.TrimPrefix(r.URL.Path, "/download/")
 	reqPath = filepath.Clean(reqPath)
 
 	if strings.Contains(reqPath, "..") {
@@ -221,18 +165,18 @@ func DownloadHandler(w http.ResponseWriter, r *http.Request) {
 	io.Copy(w, file)
 }
 
-func GetDirectoryContentHTML(w http.ResponseWriter, r *http.Request) {
-	resPath := strings.TrimPrefix(r.URL.Path, "/directory")
-	directoryItems, err := utils.GetFolderContent(resPath)
-	if err != nil {
-		fmt.Println(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+// func GetDirectoryContentHTML(w http.ResponseWriter, r *http.Request) {
+// 	resPath := strings.TrimPrefix(r.URL.Path, "/directory")
+// 	directoryItems, err := utils.GetFolderContent(resPath)
+// 	if err != nil {
+// 		fmt.Println(err.Error())
+// 		w.WriteHeader(http.StatusInternalServerError)
+// 		return
+// 	}
 
-	err = components.SubContentList(directoryItems, resPath).Render(r.Context(), w)
-	if err != nil {
-		fmt.Println(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-}
+// 	err = components.SubContentList(directoryItems, resPath).Render(r.Context(), w)
+// 	if err != nil {
+// 		fmt.Println(err.Error())
+// 		w.WriteHeader(http.StatusInternalServerError)
+// 	}
+// }

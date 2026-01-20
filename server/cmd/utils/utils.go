@@ -3,69 +3,106 @@ package utils
 
 import (
 	"fmt"
-	"io"
 	"math/rand/v2"
-	"net/http"
+	"mime"
 	"os"
 	"path/filepath"
-	"sync"
-	"sync/atomic"
+	"sort"
+	"strings"
 	"time"
 )
 
-// const BaseDir = "./data/"
-const BaseDir = "../"
-
-var (
-	status DownloadStatus
-	mu     sync.Mutex
+const (
+	BaseDir = "./data/"
+	Version = "2.0.0"
 )
 
-func GetFolderContent(path string) ([]DirectoryItem, error) {
+func GetFolderContent(path string) (FileExplorerData, error) {
 	contents, err := os.ReadDir(BaseDir + path)
 	if err != nil {
-		return []DirectoryItem{}, err
+		return FileExplorerData{}, err
 	}
 
-	var directoryItems []DirectoryItem
+	data := FileExplorerData{
+		CurrentPath: path,
+		Items:       []FileItem{},
+		TotalItems:  0,
+		TotalSize:   0,
+		Breadcrumbs: []Breadcrumb{},
+		CanGoUp:     path != "",
+	}
+
+	for _, segment := range strings.Split(path, "/") {
+		if segment == "" {
+			continue
+		}
+		var crumbPath string
+		if len(data.Breadcrumbs) == 0 {
+			crumbPath = segment + "/"
+		} else {
+			crumbPath = data.Breadcrumbs[len(data.Breadcrumbs)-1].Path + segment + "/"
+		}
+		data.Breadcrumbs = append(data.Breadcrumbs, Breadcrumb{
+			Name: segment,
+			Path: crumbPath,
+		})
+	}
+
+	var folders []FileItem
+	var files []FileItem
+
 	for _, entry := range contents {
+		data.TotalItems += 1
+
 		info, err := entry.Info()
-		var size int64
-
 		if err != nil {
-			size = 0
-		} else {
-			size = info.Size()
+			continue
+		}
+		data.TotalSize += int64(info.Size())
+
+		item := FileItem{
+			Name:        info.Name(),
+			Path:        "",
+			IsDir:       info.IsDir(),
+			Size:        info.Size(),
+			Modified:    info.ModTime(),
+			MimeType:    "application/text",
+			Icon:        "file",
+			Permissions: info.Mode().String(),
+			IsHidden:    strings.HasPrefix(info.Name(), "."),
 		}
 
-		var url string
 		if entry.IsDir() {
-			url = path + entry.Name() + "/"
-		} else {
-			url = path + entry.Name()
-		}
-
-		newItem := DirectoryItem{
-			Name:  entry.Name(),
-			IsDir: entry.IsDir(),
-			URL:   url,
-			Size:  size,
-		}
-
-		directoryItems = append(directoryItems, newItem)
-	}
-
-	var folders []DirectoryItem
-	var files []DirectoryItem
-	for _, item := range directoryItems {
-		if item.IsDir {
+			item.Path = filepath.Join(path, entry.Name()) + "/"
+			item.MimeType = "directory/folder"
+			item.Icon = "folder"
 			folders = append(folders, item)
 		} else {
+			item.Path = filepath.Join(path, entry.Name())
+			mimeType := mime.TypeByExtension(filepath.Ext(entry.Name()))
+			if mimeType == "" {
+				mimeType = "application/octet-stream"
+			}
+			item.MimeType = mimeType
+
+			if strings.HasPrefix(mimeType, "image/") {
+				item.Icon = "image"
+			} else if strings.HasPrefix(mimeType, "video/") {
+				item.Icon = "video"
+			} else if strings.HasPrefix(mimeType, "application/zip") || strings.HasPrefix(mimeType, "application/x-rar-compressed") {
+				item.Icon = "archive"
+			} else {
+				item.Icon = "file"
+			}
+
 			files = append(files, item)
 		}
 	}
+	sort.Sort(FileItemList(folders))
+	sort.Sort(FileItemList(files))
+	data.Items = append(folders, files...)
 
-	return append(folders, files...), nil
+	return data, nil
 }
 
 func FormatSize(size int64, isDir bool) string {
@@ -82,40 +119,6 @@ func FormatSize(size int64, isDir bool) string {
 	default:
 		return fmt.Sprintf("%d B", size)
 	}
-}
-
-func DownloadImage(url, folder string, idx int) {
-	atomic.AddInt32(&status.Ongoing, 1)
-	defer atomic.AddInt32(&status.Ongoing, -1)
-
-	mu.Lock()
-	resp, err := http.Get(url)
-	mu.Unlock()
-
-	if err != nil {
-		fmt.Printf("Failed to download %s: %v\n", url, err)
-		atomic.AddInt32(&status.Errored, 1)
-		return
-	}
-	defer resp.Body.Close()
-
-	os.MkdirAll(folder, os.ModePerm)
-	filename := filepath.Join(folder, fmt.Sprintf("%03d.jpg", idx))
-	out, err := os.Create(filename)
-	if err != nil {
-		fmt.Printf("Failed to create file %s: %v\n", filename, err)
-		atomic.AddInt32(&status.Errored, 1)
-		return
-	}
-	defer out.Close()
-
-	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		fmt.Printf("Failed to save %s: %v\n", filename, err)
-		atomic.AddInt32(&status.Errored, 1)
-		return
-	}
-	atomic.AddInt32(&status.Completed, 1)
 }
 
 func WithTicker(action func() bool) {

@@ -85,7 +85,7 @@ func getButtonType(btnType string) string {
 
 func getButtonClasses(props ButtonProps) string {
 	// Base classes matching shadcn
-	baseClasses := "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+	baseClasses := "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 	
 	// Variant classes
 	variant := props.Variant
@@ -96,17 +96,17 @@ func getButtonClasses(props ButtonProps) string {
 	variantClasses := ""
 	switch variant {
 	case ButtonDefault:
-		variantClasses = "bg-primary text-white hover:bg-primary/90 focus-visible:ring-blue-500/20"
+		variantClasses = "bg-primary text-primary-foreground shadow hover:bg-primary/90"
 	case ButtonDestructive:
-		variantClasses = "bg-red-600 text-white hover:bg-red-600/90 focus-visible:ring-red-500/20"
+		variantClasses = "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90"
 	case ButtonOutline:
-		variantClasses = "border border-gray-300 bg-white shadow-sm hover:bg-gray-50 hover:text-gray-900 focus-visible:ring-gray-500/20"
+		variantClasses = "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground"
 	case ButtonSecondary:
-		variantClasses = "bg-gray-100 text-gray-900 hover:bg-gray-100/80 focus-visible:ring-gray-500/20"
+		variantClasses = "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80"
 	case ButtonGhost:
-		variantClasses = "hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-gray-500/20"
+		variantClasses = "hover:bg-accent hover:text-accent-foreground"
 	case ButtonLink:
-		variantClasses = "text-primary underline-offset-4 hover:underline focus-visible:ring-blue-500/20"
+		variantClasses = "text-primary underline-offset-4 hover:underline"
 	}
 	
 	// Size classes
@@ -118,17 +118,17 @@ func getButtonClasses(props ButtonProps) string {
 	sizeClasses := ""
 	switch size {
 	case ButtonSizeDefault:
-		sizeClasses = "h-9 px-4 py-2"
+		sizeClasses = "h-10 px-4 py-2"
 	case ButtonSizeSm:
-		sizeClasses = "h-8 rounded-md gap-1.5 px-3"
+		sizeClasses = "h-9 rounded-md gap-1.5 px-3 text-xs"
 	case ButtonSizeLg:
-		sizeClasses = "h-10 rounded-md px-6"
+		sizeClasses = "h-11 rounded-md px-8"
 	case ButtonSizeIcon:
-		sizeClasses = "size-9"
-	case ButtonSizeIconSm:
-		sizeClasses = "size-8"
-	case ButtonSizeIconLg:
 		sizeClasses = "size-10"
+	case ButtonSizeIconSm:
+		sizeClasses = "size-9"
+	case ButtonSizeIconLg:
+		sizeClasses = "size-11"
 	}
 	
 	// Combine all classes
