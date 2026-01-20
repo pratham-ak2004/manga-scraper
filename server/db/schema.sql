@@ -5,6 +5,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TYPE "Status" AS ENUM ('ONGOING', 'COMPLETED', 'UPCOMING');
 CREATE TYPE "TaskType" AS ENUM ('PIPELINE', 'REQUEST');
+CREATE TYPE "TaskStatus" AS ENUM ('PENDING', 'SUCCESS', 'RETRY', 'FAILURE', 'STARTED');
 CREATE TYPE "ArchiveStatus" AS ENUM ('PENDING', 'COMPLETED', 'FAILED');
 
 CREATE TABLE IF NOT EXISTS Manga (
@@ -21,6 +22,8 @@ CREATE TABLE IF NOT EXISTS Manga (
     updatedAt TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE INDEX manga_index ON Manga (title, status);
+
 CREATE TABLE IF NOT EXISTS Chapter (
     id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
     number FLOAT NOT NULL,
@@ -33,7 +36,7 @@ CREATE TABLE IF NOT EXISTS Chapter (
     CONSTRAINT chapter_number_idx UNIQUE (number, mangaId)
 );
 
-CREATE INDEX IF NOT EXISTS chapter_number_index ON Chapter(number);
+CREATE INDEX chapter_index ON Chapter (mangaId, number);
 
 CREATE TABLE IF NOT EXISTS Page (
     index INT NOT NULL,
@@ -49,6 +52,8 @@ CREATE TABLE IF NOT EXISTS Page (
 
     PRIMARY KEY (index, chapterId)
 );
+
+CREATE INDEX page_index ON Page (chapterId, index);
 
 CREATE TABLE Archive (
     id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -66,16 +71,21 @@ CREATE TABLE Archive (
     updatedAt TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE INDEX archive_index ON Archive(mangaId, startChapter, endChapter);
+
 CREATE TABLE IF NOT EXISTS Task (
     id TEXT UNIQUE NOT NULL,
+
     name VARCHAR(255) NOT NULL,
     type "TaskType" DEFAULT 'REQUEST',
+    status "TaskStatus" DEFAULT 'PENDING',
     data JSON,
 
-    createdAt TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    createdAt TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS page_chapter_index_index ON Page(chapterId, index);
+CREATE INDEX task_index ON Task (status, updatedAt, name);
 
 CREATE OR REPLACE FUNCTION set_current_timestamp()
 RETURNS TRIGGER AS $$
@@ -102,5 +112,10 @@ EXECUTE FUNCTION set_current_timestamp();
 
 CREATE TRIGGER updated_at_Page_trigger
 BEFORE UPDATE ON Page
+FOR EACH ROW
+EXECUTE FUNCTION set_current_timestamp();
+
+CREATE TRIGGER updated_at_Task_trigger
+BEFORE UPDATE ON Task
 FOR EACH ROW
 EXECUTE FUNCTION set_current_timestamp();

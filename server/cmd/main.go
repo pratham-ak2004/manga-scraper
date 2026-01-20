@@ -20,6 +20,11 @@ func bindAllRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/dashboard/manga", routes.GET(handlers.MangaListPage))
 	mux.HandleFunc("/dashboard/manga/", routes.GET(handlers.MangaPage))
 
+	mux.HandleFunc("/manga/chapters/", routes.GET(handlers.MangaChaptersList))
+	mux.HandleFunc("/manga/archives/", routes.GET(handlers.MangaArchivesList))
+	mux.HandleFunc("/archives/download/", routes.GET(handlers.DownloadHandler))
+	// TODO:: mux.HandleFunc("/manga/read/", routes.GET(handlers.ReadChapter()))
+
 	mux.HandleFunc("/api/v1/manga", routes.POST(handlers.NewMangaLinkHandler))
 	mux.HandleFunc("/api/v1/chapter", routes.POST(handlers.NewChapterLinkHandler))
 	mux.HandleFunc("/api/v1/archive", routes.POST(handlers.ArchiveMangaHandler))
@@ -40,7 +45,7 @@ func main() {
 		logger.Logger.Fatal("Failed to connect to DB: " + err.Error())
 	}
 
-	services.Celery.WaitForTaskResultAtStartUp()
+	// go services.Celery.WaitForTaskResultAtStartUp()
 
 	mux := server.GetMux()
 	bindAllRoutes(mux)

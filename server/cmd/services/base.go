@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"sync"
 
+	"download-server/cmd/utils"
 	"download-server/db"
 	"download-server/db/generated"
 	"download-server/internal/logger"
@@ -173,24 +174,30 @@ func CreateNewCeleryConnection() {
 }
 
 func CreateTask(id string, task string, taskType generated.TaskType) {
-	queries := db.GetDB()
+	utils.WithTicker(func() bool {
+		queries := db.GetDB()
 
-	_, err := queries.CreateTask(context.Background(), generated.CreateTaskParams{
-		ID:   id,
-		Name: task,
-		Type: generated.NullTaskType{TaskType: taskType, Valid: true},
+		_, err := queries.CreateTask(context.Background(), generated.CreateTaskParams{
+			ID:   id,
+			Name: task,
+			Type: generated.NullTaskType{TaskType: taskType, Valid: true},
+		})
+
+		if err == nil {
+			return true
+		} else {
+			return false
+		}
 	})
-	if err != nil {
-		logger.Logger.Println(logger.Colors["blue"] + "Database: " + logger.Colors["red"] + err.Error() + logger.Colors["reset"])
-	}
 }
 
-func UpdateTaskWithData(id string, data []byte) (generated.Task, error) {
+func UpdateTaskWithData(id string, status generated.NullTaskStatus, data []byte) (generated.Task, error) {
 	queries := db.GetDB()
 
 	task, err := queries.UpdateTaskByID(context.Background(), generated.UpdateTaskByIDParams{
-		ID:   id,
-		Data: data,
+		ID:     id,
+		Data:   data,
+		Status: status,
 	})
 
 	return task, err

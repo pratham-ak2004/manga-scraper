@@ -9,7 +9,7 @@ class BaseEventTask(Task, ABC):
     
     # Override in subclasses
     name = None
-    max_retries = 3
+    max_retries = 5
     retry_countdown = 60
     
     def __init__(self):

@@ -13,7 +13,8 @@ import (
 	"time"
 )
 
-const BaseDir = "./data/"
+// const BaseDir = "./data/"
+const BaseDir = "../"
 
 var (
 	status DownloadStatus

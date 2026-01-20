@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"mime"
@@ -105,10 +104,74 @@ func MangaPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err = json.NewEncoder(w).Encode(manga); err != nil {
-		http.Error(w, "Failed to encode json : "+err.Error(), http.StatusInternalServerError)
+	details, err := queries.ListMangaDetails(context.Background(), id)
+	if err != nil {
+		details = generated.ListMangaDetailsRow{
+			ChapterCount:       0,
+			PageCount:          0,
+			AvgPagesPerChapter: 0,
+		}
+	}
+
+	err = pages.Details(manga, details).Render(r.Context(), w)
+	if err != nil {
+		http.Error(w, "Failed to generate Not Found page", http.StatusInternalServerError)
+	}
+}
+
+func MangaChaptersList(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimPrefix(r.URL.String(), "/manga/chapters/")
+	if id == "" {
+		http.Error(w, "Invalid Manga ID", http.StatusBadRequest)
 		return
+	}
+
+	queries := db.GetDB()
+
+	chapters, err := queries.GetChaptersByMangaID(context.Background(), id)
+	if err != nil && err.Error() != "no rows in result set" {
+		http.Error(w, "Failed to fetch chapters from DB"+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if err != nil && err.Error() == "no rows in result set" {
+		err = pages.NotFound().Render(r.Context(), w)
+		if err != nil {
+			http.Error(w, "Failed to generate Not Found page", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	err = components.ChaptersList(chapters).Render(r.Context(), w)
+	if err != nil {
+		http.Error(w, "Failed to generate Not Found page", http.StatusInternalServerError)
+	}
+}
+
+func MangaArchivesList(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimPrefix(r.URL.String(), "/manga/archives/")
+	if id == "" {
+		http.Error(w, "Invalid Manga ID", http.StatusBadRequest)
+		return
+	}
+
+	queries := db.GetDB()
+
+	archives, err := queries.GetArchivesByMangaID(context.Background(), id)
+	if err != nil && err.Error() != "no rows in result set" {
+		http.Error(w, "Failed to fetch chapters from DB", http.StatusInternalServerError)
+		return
+	}
+	if err != nil && err.Error() == "no rows in result set" {
+		err = pages.NotFound().Render(r.Context(), w)
+		if err != nil {
+			http.Error(w, "Failed to generate Not Found page", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	err = components.ArchivesList(archives).Render(r.Context(), w)
+	if err != nil {
+		http.Error(w, "Failed to generate Not Found page", http.StatusInternalServerError)
 	}
 }
 
@@ -131,7 +194,7 @@ func StatusHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DownloadHandler(w http.ResponseWriter, r *http.Request) {
-	reqPath := strings.TrimPrefix(r.URL.Path, "/download/")
+	reqPath := strings.TrimPrefix(r.URL.Path, "/archives/download/")
 	reqPath = filepath.Clean(reqPath)
 
 	if strings.Contains(reqPath, "..") {

@@ -9,7 +9,7 @@ logger = get_logger(__name__)
 class PageDownloadTask(BaseEventTask):
     name = "tasks.page.download"
     image_format = "webp"
-    compression_method = 6
+    compression_method = 4
     
     def __init__(self):
         super().__init__()

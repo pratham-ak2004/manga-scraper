@@ -1,3 +1,4 @@
+-- Active: 1768887792894@@10.171.67.191@5432@manga_db
 -- name: CreateManga :one
 INSERT INTO Manga (title, url, status) VALUES ($1, $2, $3) RETURNING *;
 
@@ -23,7 +24,7 @@ UPDATE Chapter SET url = $2 WHERE id = $1 RETURNING *;
 UPDATE Page SET downloadedAt = $3 WHERE index = $1 AND chapterId = $2 RETURNING *;
 
 -- name: UpdateTaskByID :one
-UPDATE Task SET data = $2 WHERE id = $1 RETURNING *;
+UPDATE Task SET data = $2, status = $3 WHERE id = $1 RETURNING *;
 
 -- name: UpdateArchiveStatusAndSizeByID :one
 UPDATE Archive SET status = $2, size = $3 WHERE id = $1 RETURNING *;
@@ -61,17 +62,35 @@ SELECT * FROM Chapter WHERE url = $1;
 -- name: GetChapterByIndexAndManga :one
 SELECT * FROM Chapter WHERE number = $1 AND mangaId = $2;
 
+-- name: GetChaptersByMangaID :many
+SELECT * FROM Chapter WHERE mangaId = $1 ORDER BY number ASC;
+
+-- name: GetChaptersByMangaIDWithPageCount :many
+SELECT * FROM Chapter c LEFT JOIN (
+    SELECT chapterId, COUNT(*) AS pageCount
+    FROM Page
+    GROUP BY chapterId
+) p ON c.id = p.chapterId
+WHERE c.mangaId = $1
+ORDER BY c.number ASC;
+
 -- name: GetPageByIndexAndChapterID :one
 SELECT * FROM Page where index = $1 AND chapterId = $2;
 
--- name: GetAllTask :many
-SELECT * FROM Task WHERE type = $1 ORDER BY createdAt ASC;
+-- name: GetAllPendingTask :many
+SELECT * FROM Task WHERE status != 'SUCCESS' ORDER BY createdAt ASC;
+
+-- name: GetAllCompletedTask :many
+SELECT * FROM Task WHERE status = 'SUCCESS' ORDER BY updatedAt DESC;
 
 -- name: GetArchiveByMangaID :one
 SELECT * FROM Archive WHERE mangaId = $1 AND startChapter = $2 AND endChapter = $3;
 
 -- name: GetArchiveByMangaIDIfComplete :one
 SELECT * FROM Archive WHERE mangaId = $1 AND complete = TRUE;
+
+-- name: GetArchivesByMangaID :many
+SELECT * FROM Archive WHERE mangaId = $1 ORDER BY createdAt DESC;
 
 -- name: GetPagesByRangeAndMangaID :many
 SELECT 
@@ -122,6 +141,18 @@ GROUP BY
 
 ORDER BY
     m.updatedAt DESC;
+
+-- name: ListMangaDetails :one
+SELECT 
+COUNT(DISTINCT c.id)::INT AS chapter_count,
+COUNT(p.url)::INT AS page_count,
+COALESCE(COUNT(p.url)::INT, 0)::INT / NULLIF(COUNT(DISTINCT c.id)::INT, 0) AS avg_pages_per_chapter
+FROM Manga m
+LEFT JOIN Chapter c
+  ON c.mangaId = m.id
+LEFT JOIN Page p
+  ON p.chapterId = c.id
+WHERE m.id = $1;
 
 -- name: DeleteTaskByID :one 
 DELETE FROM Task WHERE id = $1 RETURNING *;

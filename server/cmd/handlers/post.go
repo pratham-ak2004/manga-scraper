@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"math"
 	"net/http"
 	"strconv"
 
@@ -111,6 +112,11 @@ func ArchiveMangaHandler(w http.ResponseWriter, r *http.Request) {
 	end, _ := strconv.ParseFloat(endStr, 32)
 	full, _ := strconv.ParseBool(fullStr)
 
+	if full {
+		start = 1
+		end = math.MaxFloat64
+	}
+
 	if start < 1 {
 		start = 1
 	}
@@ -146,10 +152,12 @@ func ArchiveMangaHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if pages[len(pages)-1].Chapternumber <= end && start <= 1 || full {
+	if pages[len(pages)-1].Chapternumber < end && start <= 1 || full {
 		full = true
 		end = pages[len(pages)-1].Chapternumber
 		start = 1
+	} else {
+		full = false
 	}
 
 	_, err = queries.GetArchiveByMangaID(context.Background(), generated.GetArchiveByMangaIDParams{
@@ -166,7 +174,6 @@ func ArchiveMangaHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: todo
 	filePath := utils.BaseDir + manga.Title.String + "/" + "archives" + "/" + strconv.FormatFloat(start, 'f', -1, 64) + "-" + strconv.FormatFloat(end, 'f', -1, 64) + ".cbz"
 	archive, err := queries.CreateArchiveWithRange(context.Background(), generated.CreateArchiveWithRangeParams{
 		Mangaid:      manga.ID,

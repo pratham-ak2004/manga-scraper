@@ -1,27 +1,30 @@
 volumes:
-  manga-scraper-rabbitmq-data:
-  manga-scraper-redis-data:
+  manga-scraper-dbs:
   manga-scraper-data:
 
 networks:
   public:
+    driver: bridge
   internal:
-    internal: true
+    driver: bridge
 
 services:
   postgres:
     image: postgres:18
     container_name: manga-scraper-postgres
     environment:
-      POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
-      POSTGRES_DB: ${DB_NAME:-manga_scraper}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "5432:5432"
     expose:
       - "5432"
     networks:
       - public
+      - internal
+    volumes:
+      - ./server/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     restart: unless-stopped
 
   rabbitmq:
@@ -31,22 +34,18 @@ services:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-guest}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-password}
     ports:
-      - "${RABBITMQ_PORT:-5672}:5672"
+      - "5672:5672"
       - "15672:15672"
     expose:
       - 5672
       - 15672
     networks:
       - public
+      - internal
     volumes:
-      - manga-scraper-rabbitmq-data:/var/lib/rabbitmq
-      - manga-scraper-rabbitmq-data:/var/log/rabbitmq
+      - manga-scraper-dbs:/var/lib/rabbitmq
+      - manga-scraper-dbs:/var/log/rabbitmq
     restart: unless-stopped
-    healthcheck:
-      test: rabbitmq-diagnostics -q ping
-      interval: 30s
-      timeout: 10s
-      retries: 5
 
   redis:
     image: redis:8.4
@@ -54,23 +53,24 @@ services:
     command:
       - redis-server
       - --requirepass
-      - ${REDIS_PASSWORD:-password}
+      - ${REDIS_PASSWORD}
       - --appendonly
       - "yes"
       - --user
-      - ${REDIS_USERNAME:-default}
+      - ${REDIS_USERNAME}
       - "on"
-      - ">${REDIS_PASSWORD:-password}"
+      - ">${REDIS_PASSWORD}"
       - ~*
       - +@all
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "6379:6379"
     expose:
       - "6379"
     networks:
       - public
+      - internal
     volumes:
-      - manga-scraper-redis-data:/data
+      - manga-scraper-dbs:/data
     restart: unless-stopped
 
   server:
@@ -90,6 +90,7 @@ services:
       - "8080"
     networks:
       - public
+      - internal
     restart: unless-stopped
     depends_on:
       - postgres
@@ -123,9 +124,9 @@ services:
       - manga-scraper-data:/app/data
     networks:
       - public
-    restart: unless-stopped
-    deploy:
-      replicas: 2
+      - internal
+    # deploy:
+    #   replicas: 2
     depends_on:
       - rabbitmq
       - redis

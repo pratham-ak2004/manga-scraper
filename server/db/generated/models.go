@@ -97,6 +97,51 @@ func (ns NullStatus) Value() (driver.Value, error) {
 	return string(ns.Status), nil
 }
 
+type TaskStatus string
+
+const (
+	TaskStatusPENDING TaskStatus = "PENDING"
+	TaskStatusSUCCESS TaskStatus = "SUCCESS"
+	TaskStatusRETRY   TaskStatus = "RETRY"
+	TaskStatusFAILURE TaskStatus = "FAILURE"
+	TaskStatusSTARTED TaskStatus = "STARTED"
+)
+
+func (e *TaskStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = TaskStatus(s)
+	case string:
+		*e = TaskStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for TaskStatus: %T", src)
+	}
+	return nil
+}
+
+type NullTaskStatus struct {
+	TaskStatus TaskStatus
+	Valid      bool // Valid is true if TaskStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullTaskStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.TaskStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.TaskStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullTaskStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.TaskStatus), nil
+}
+
 type TaskType string
 
 const (
@@ -188,6 +233,8 @@ type Task struct {
 	ID        string
 	Name      string
 	Type      NullTaskType
+	Status    NullTaskStatus
 	Data      interface{}
 	Createdat pgtype.Timestamp
+	Updatedat pgtype.Timestamp
 }

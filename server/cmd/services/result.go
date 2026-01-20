@@ -67,11 +67,12 @@ func TasksPipelineMangaScrapeResult(data json.RawMessage) (bool, error) {
 	// Determine status from details
 	var status generated.Status
 	for _, val := range details["Status"] {
-		if val.Name == "Complete" {
+		switch val.Name {
+		case "Complete":
 			status = generated.StatusCOMPLETED
-		} else if val.Name == "Ongoing" {
+		case "Ongoing":
 			status = generated.StatusONGOING
-		} else {
+		default:
 			status = generated.StatusUPCOMING
 		}
 	}
@@ -92,7 +93,9 @@ func TasksPipelineMangaScrapeResult(data json.RawMessage) (bool, error) {
 
 	// Create Chapter for manga is not present
 	for _, val := range result.Data.Chapters {
-		go func() {
+		go utils.WithTicker(func() bool {
+			queries = db.GetDB()
+
 			chapter, err := queries.GetChapterByIndexAndManga(context.Background(), generated.GetChapterByIndexAndMangaParams{
 				Number:  val.Number.Float64(),
 				Mangaid: manga.ID,
@@ -100,7 +103,7 @@ func TasksPipelineMangaScrapeResult(data json.RawMessage) (bool, error) {
 
 			if err != nil && err.Error() != "no rows in result set" {
 				logger.Logger.Println(logger.Colors["yellow"] + "Failed to fetch chapter from db for " + manga.ID + " - " + val.Number.String() + " : " + err.Error() + logger.Colors["reset"])
-				return
+				return false
 			}
 
 			// New Chapter
@@ -114,6 +117,7 @@ func TasksPipelineMangaScrapeResult(data json.RawMessage) (bool, error) {
 
 				if err != nil {
 					logger.Logger.Println(logger.Colors["yellow"] + "Failed to create Chapter for " + manga.ID + " - " + val.Number.String() + " : " + err.Error())
+					return false
 				} else {
 					// Send Task to scrape chapter
 					utils.WithTicker(func() bool {
@@ -135,6 +139,7 @@ func TasksPipelineMangaScrapeResult(data json.RawMessage) (bool, error) {
 
 				if err != nil {
 					logger.Logger.Println(logger.Colors["yellow"] + "Failed to update Chapter for " + manga.ID + " - " + val.Number.String() + " : " + err.Error())
+					return false
 				} else {
 					utils.WithTicker(func() bool {
 						err = Celery.SendNewPipelineChapterTask(chapter.ID, chapter.Url, manga.Title.String, strconv.FormatFloat(chapter.Number, 'f', 5, 32))
@@ -146,7 +151,9 @@ func TasksPipelineMangaScrapeResult(data json.RawMessage) (bool, error) {
 					})
 				}
 			}
-		}()
+
+			return true
+		})
 	}
 
 	logger.Logger.Println(logger.Colors["green"] + "Success : " + result.Data.Name + " " + result.Payload.ID + logger.Colors["reset"])
@@ -160,10 +167,9 @@ func TasksPipelineChapterScrapeResult(data json.RawMessage) (bool, error) {
 		return false, errors.New("failed to Unmarshal result for task")
 	}
 
-	queries := db.GetDB()
-
 	for _, val := range result.Data {
-		go func() {
+		go utils.WithTicker(func() bool {
+			queries := db.GetDB()
 			page, err := queries.GetPageByIndexAndChapterID(context.Background(), generated.GetPageByIndexAndChapterIDParams{
 				Index:     int32(val.Index),
 				Chapterid: result.Payload.ID,
@@ -171,7 +177,7 @@ func TasksPipelineChapterScrapeResult(data json.RawMessage) (bool, error) {
 
 			if err != nil && err.Error() != "no rows in result set" {
 				logger.Logger.Println(logger.Colors["yellow"] + "Failed to fetch Page from db for " + result.Payload.ID + " - " + strconv.Itoa(val.Index) + " : " + err.Error() + logger.Colors["reset"])
-				return
+				return false
 			}
 
 			if err != nil && err.Error() == "no rows in result set" {
@@ -185,6 +191,7 @@ func TasksPipelineChapterScrapeResult(data json.RawMessage) (bool, error) {
 
 				if err != nil {
 					logger.Logger.Println(logger.Colors["yellow"] + "Failed to create Page for " + result.Payload.ID + " - " + strconv.Itoa(val.Index) + " : " + err.Error())
+					return false
 				} else {
 					// Send Task to scrape chapter
 					utils.WithTicker(func() bool {
@@ -207,6 +214,7 @@ func TasksPipelineChapterScrapeResult(data json.RawMessage) (bool, error) {
 
 				if err != nil {
 					logger.Logger.Println(logger.Colors["yellow"] + "Failed to update Page for " + result.Payload.ID + " - " + strconv.Itoa(val.Index) + " : " + err.Error())
+					return false
 				} else {
 					// Send Task to scrape chapter
 					utils.WithTicker(func() bool {
@@ -219,7 +227,9 @@ func TasksPipelineChapterScrapeResult(data json.RawMessage) (bool, error) {
 					})
 				}
 			}
-		}()
+
+			return true
+		})
 	}
 
 	logger.Logger.Println(logger.Colors["green"] + "Success : " + result.Payload.ID + logger.Colors["reset"])
@@ -233,13 +243,12 @@ func TasksPipelinePageDownloadResult(data CeleryResult) (bool, error) {
 		return false, errors.New("failed to Unmarshal result for task")
 	}
 
-	queries := db.GetDB()
-
 	t, err := time.Parse(time.UnixDate, data.DateDone)
 	if err != nil {
 		t = time.Now()
 	}
 
+	queries := db.GetDB()
 	_, err = queries.UpdatePageDownloadedAt(context.Background(), generated.UpdatePageDownloadedAtParams{
 		Index:        int32(result.Payload.Index),
 		Chapterid:    result.Payload.ChapterID,
@@ -273,5 +282,5 @@ func TasksRequestMangaArchiveResult(data json.RawMessage) (bool, error) {
 	}
 
 	logger.Logger.Println(logger.Colors["green"] + "Success : " + result.Payload.Archive.ID + logger.Colors["reset"])
-	return true, nil
+	return false, nil
 }
