@@ -123,7 +123,7 @@ templ ArchivesList(archives []generated.Archive) {
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end space-x-3">
                                     if archive.Status.Valid && archive.Status.ArchiveStatus == generated.ArchiveStatusCOMPLETED {
-                                        <a href={ templ.SafeURL("/archives/download/" + archive.Filepath) }
+                                        <a href={ templ.SafeURL("/download/" + archive.Filepath) }
                                             class="text-success hover:text-success/80 inline-flex items-center transition-colors"
                                             title="Download Archive">
                                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
