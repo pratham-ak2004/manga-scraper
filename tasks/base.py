@@ -2,7 +2,7 @@ from utils.logger import get_logger
 from abc import ABC, abstractmethod
 from celery import Task
 
-logger = get_logger(__name__)
+lg = get_logger(__name__)
 
 class BaseEventTask(Task, ABC):
     """Base class for event-based Celery tasks"""
@@ -12,11 +12,12 @@ class BaseEventTask(Task, ABC):
     max_retries = 5
     retry_countdown = 60
     
-    def __init__(self):
+    def __init__(self, logger=lg):
         if not self.name:
             raise NotImplementedError("Subclasses must define name")
         super().__init__()
-        logger.debug(f"Initialized task: {self.name}")
+        self.logger = logger
+        self.logger.debug(f"Initialized task: {self.name}")
     
     @abstractmethod
     def process(self, event: dict) -> dict:
@@ -27,15 +28,15 @@ class BaseEventTask(Task, ABC):
         """Celery task entry point"""
         try:
             if not self.validate(event):
-                logger.error(f"Invalid event: {self.name} - {event}")
+                self.logger.error(f"Invalid event: {self.name} - {event}")
                 return None 
             
             result = self.process(event)
-            logger.debug(f"Successfully processed {self.name}")
+            self.logger.debug(f"Successfully processed {self.name}")
             return result
             
         except Exception as exc:
-            logger.error(f"Error in {self.name}: {exc}")
+            self.logger.error(f"Error in {self.name}: {exc}")
             raise self.retry(exc=exc, countdown=self.retry_countdown)
     
     def validate(self, event: dict) -> bool:

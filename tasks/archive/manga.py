@@ -3,13 +3,13 @@ from utils.logger import get_logger
 from zipfile import ZipFile
 import os, zipfile
 
-logger = get_logger(__name__)
+lg = get_logger(__name__)
 
 class MangaArchiveTask(BaseEventTask):
     name = "tasks.archive.manga.cbz"
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, logger=lg):
+        super().__init__(logger=logger)
         
     def validate(self, event: dict) -> bool:
         try:
@@ -35,7 +35,7 @@ class MangaArchiveTask(BaseEventTask):
                         
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
             
-            logger.info(f"Creating manga archive at {file_path} with {len(pages)} pages.")
+            self.logger.info(f"Creating manga archive at {file_path} with {len(pages)} pages.")
                         
             with zipfile.ZipFile(file_path, "w", zipfile.ZIP_DEFLATED) as cbz:
                 for i, page in enumerate(pages):
@@ -43,7 +43,7 @@ class MangaArchiveTask(BaseEventTask):
                     arcname = f"{i+1:04d}-{os.path.splitext(page_path)[1]}"
                     cbz.write(page_path, arcname)
             
-            logger.info(f"Successfully created manga archive at {file_path}")
+            self.logger.info(f"Successfully created manga archive at {file_path}")
             
             return {
                 'payload': event,
@@ -54,5 +54,5 @@ class MangaArchiveTask(BaseEventTask):
                 }
             }
         except Exception as e:
-            logger.error(f"Error creating manga archive: {str(e)}")
+            self.logger.error(f"Error creating manga archive: {str(e)}")
             raise e

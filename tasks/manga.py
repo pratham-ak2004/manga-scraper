@@ -4,15 +4,15 @@ from utils.playwright import PlaywrightManager
 from bs4 import BeautifulSoup
 import re, time
 
-logger = get_logger(__name__)
+lg = get_logger(__name__)
 
 class MangaScrapeTask(BaseEventTask):
     name = "tasks.manga.scrape"
     url_starts_with = "https://weebcentral.com"
     load_more_chapters_target = 'button[hx-target="#chapter-list"]'
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, logger=lg):
+        super().__init__(logger=logger)
     
     def validate(self, event: dict) -> bool:
         result = super().validate(event)
@@ -51,7 +51,7 @@ class MangaScrapeTask(BaseEventTask):
                 "details": details_map
             }
         except Exception as e:
-            logger.error(f"Failed to extract manga details: {str(e)}")
+            self.logger.error(f"Failed to extract manga details: {str(e)}")
             return {
                 "name": "N/A",
                 "picture": "N/A",
@@ -87,7 +87,7 @@ class MangaScrapeTask(BaseEventTask):
             - **dict** Result of the scraping operation
         """
         manga_url = event.get('url')        
-        logger.info(f"Scraping manga from URL: {manga_url}")
+        self.logger.info(f"Scraping manga from URL: {manga_url}")
         
         try:
             html_content = self.scrape_manga(manga_url)
@@ -112,14 +112,14 @@ class MangaScrapeTask(BaseEventTask):
                     description.find("strong").decompose()
                 description = description.p.text.strip()
             except:
-                logger.warning("Failed to extract description, setting as N/A")
+                self.logger.warning("Failed to extract description, setting as N/A")
                 description = "N/A"
                 
             data = self.extract_details(soup)
             data["chapters"] = chapters
             data["description"] = description
             
-            logger.debug(f"Total chapters found: {len(chapters)}")
+            self.logger.debug(f"Total chapters found: {len(chapters)}")
             
             return {
                 'url': manga_url,
@@ -128,5 +128,5 @@ class MangaScrapeTask(BaseEventTask):
                 'payload': event
             }
         except Exception as e:
-            logger.error(f"Scraping failed for {manga_url}: {str(e)}")
+            self.logger.error(f"Scraping failed for {manga_url}: {str(e)}")
             raise e

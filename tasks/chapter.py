@@ -5,15 +5,15 @@ from bs4 import BeautifulSoup
 from eventprocessor.celery_app import app
 import os
 
-logger = get_logger(__name__)
+lg = get_logger(__name__)
 
 class ChapterScrapeTask(BaseEventTask):
     name = "tasks.chapter.scrape"
     image_section_selector = "section[hx-trigger=\"change from:[name='reading_style']\"]"
     image_format = "webp"
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, logger=lg):
+        super().__init__(logger=logger)
     
     def validate(self, event: dict) -> bool:
         result = super().validate(event)
@@ -56,7 +56,7 @@ class ChapterScrapeTask(BaseEventTask):
         Process the event data to scrape chapter information.
         """
         chapter_url = event.get('url')
-        logger.info(f"Starting scrape for chapter URL: {chapter_url}")
+        self.logger.info(f"Starting scrape for chapter URL: {chapter_url}")
         
         try:
             html_content = self.scrape_chapter(chapter_url)
@@ -69,14 +69,14 @@ class ChapterScrapeTask(BaseEventTask):
             path = os.path.join(base_path, name, "chapters", chapter)
             
             if not os.path.exists(path):
-                logger.debug(f"Creating directory: {path}")
+                self.logger.debug(f"Creating directory: {path}")
                 os.makedirs(path)
                 
             for index, image in enumerate(image_list):
                 file_path = os.path.join(path, f"page_{image['index']}.{self.image_format}")
                 image_list[index]['file_path'] = file_path
                 
-            logger.debug(f"Scraped {len(image_list)} images for chapter URL: {chapter_url}")
+            self.logger.debug(f"Scraped {len(image_list)} images for chapter URL: {chapter_url}")
             
             return {
                 'url': chapter_url,
@@ -85,5 +85,5 @@ class ChapterScrapeTask(BaseEventTask):
                 'payload': event
             }
         except Exception as e:
-            logger.error(f"Scraping failed for {chapter_url}: {str(e)}")
+            self.logger.error(f"Scraping failed for {chapter_url}: {str(e)}")
             raise e
