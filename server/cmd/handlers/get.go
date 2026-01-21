@@ -2,8 +2,6 @@ package handlers
 
 import (
 	"context"
-	"io"
-	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -155,14 +153,17 @@ func DownloadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	mimeType := mime.TypeByExtension(filepath.Ext(reqPath))
-	if mimeType == "" {
-		mimeType = "application/octet-stream"
-	}
+	stat, err := file.Stat()
+    if err != nil {
+        http.Error(w, "Unable to stat file", http.StatusInternalServerError)
+        return
+    }
 
-	w.Header().Set("Content-Type", mimeType)
-	w.Header().Set("Content-Disposition", "attachment; filename=\""+filepath.Base(reqPath)+"\"")
-	io.Copy(w, file)
+    w.Header().Set("Content-Disposition", `attachment; filename="` + stat.Name() + `"`)
+    w.Header().Set("Content-Type", "application/octet-stream")
+    w.Header().Set("Accept-Ranges", "bytes")
+
+	http.ServeContent(w, r, stat.Name(), stat.ModTime(), file)
 }
 
 func TaskPage(w http.ResponseWriter, r *http.Request) {
