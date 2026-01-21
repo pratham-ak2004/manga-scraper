@@ -2,19 +2,20 @@ package handlers
 
 import (
 	"context"
-	"math"
-	"net/http"
-	"strconv"
-	"strings"
-
 	"download-server/cmd/services"
 	"download-server/cmd/utils"
 	"download-server/db"
 	"download-server/db/generated"
 	"download-server/views/components/svg"
+	"math"
+	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const SiteUrl = "weebcentral.com"
 
 func NewMangaLinkHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
@@ -26,7 +27,7 @@ func NewMangaLinkHandler(w http.ResponseWriter, r *http.Request) {
 
 	url := r.Form.Get("manga-url")
 
-	if url == "" || !(strings.HasPrefix(url, "http://weebcentral.com") || strings.HasPrefix(url, "weebcentral.com")) {
+	if url == "" || !(strings.HasPrefix(url, "https://"+SiteUrl) || strings.HasPrefix(url, SiteUrl)) {
 		utils.CreateToast(w, "error", "Invalid URL")
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
