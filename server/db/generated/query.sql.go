@@ -162,59 +162,24 @@ func (q *Queries) CreatePage(ctx context.Context, arg CreatePageParams) (Page, e
 	return i, err
 }
 
-const createPageIfNotExists = `-- name: CreatePageIfNotExists :one
-INSERT INTO Page (index, url, altText, chapterId, filePath)
-VALUES ($1, $2, $3, $4, $5)
-ON CONFLICT (index, chapterId) 
-DO UPDATE SET 
-    url = EXCLUDED.url,
-    altText = EXCLUDED.altText,
-    filePath = EXCLUDED.filePath
-RETURNING index, url, alttext, filepath, downloadedat, chapterid, createdat, updatedat
-`
-
-type CreatePageIfNotExistsParams struct {
-	Index     int32
-	Url       string
-	Alttext   pgtype.Text
-	Chapterid string
-	Filepath  string
-}
-
-func (q *Queries) CreatePageIfNotExists(ctx context.Context, arg CreatePageIfNotExistsParams) (Page, error) {
-	row := q.db.QueryRow(ctx, createPageIfNotExists,
-		arg.Index,
-		arg.Url,
-		arg.Alttext,
-		arg.Chapterid,
-		arg.Filepath,
-	)
-	var i Page
-	err := row.Scan(
-		&i.Index,
-		&i.Url,
-		&i.Alttext,
-		&i.Filepath,
-		&i.Downloadedat,
-		&i.Chapterid,
-		&i.Createdat,
-		&i.Updatedat,
-	)
-	return i, err
-}
-
 const createTask = `-- name: CreateTask :one
-INSERT INTO Task (id, name, type) VALUES ($1, $2, $3) RETURNING id, name, type, status, data, createdat, updatedat
+INSERT INTO Task (id, name, type, payload) VALUES ($1, $2, $3, $4) RETURNING id, name, type, status, data, payload, createdat, updatedat
 `
 
 type CreateTaskParams struct {
-	ID   string
-	Name string
-	Type NullTaskType
+	ID      string
+	Name    string
+	Type    NullTaskType
+	Payload interface{}
 }
 
 func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error) {
-	row := q.db.QueryRow(ctx, createTask, arg.ID, arg.Name, arg.Type)
+	row := q.db.QueryRow(ctx, createTask,
+		arg.ID,
+		arg.Name,
+		arg.Type,
+		arg.Payload,
+	)
 	var i Task
 	err := row.Scan(
 		&i.ID,
@@ -222,6 +187,7 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		&i.Type,
 		&i.Status,
 		&i.Data,
+		&i.Payload,
 		&i.Createdat,
 		&i.Updatedat,
 	)
@@ -260,7 +226,7 @@ func (q *Queries) DashboardTaskDetails(ctx context.Context) (DashboardTaskDetail
 }
 
 const deleteTaskByID = `-- name: DeleteTaskByID :one
-DELETE FROM Task WHERE id = $1 RETURNING id, name, type, status, data, createdat, updatedat
+DELETE FROM Task WHERE id = $1 RETURNING id, name, type, status, data, payload, createdat, updatedat
 `
 
 func (q *Queries) DeleteTaskByID(ctx context.Context, id string) (Task, error) {
@@ -272,6 +238,7 @@ func (q *Queries) DeleteTaskByID(ctx context.Context, id string) (Task, error) {
 		&i.Type,
 		&i.Status,
 		&i.Data,
+		&i.Payload,
 		&i.Createdat,
 		&i.Updatedat,
 	)
@@ -279,7 +246,7 @@ func (q *Queries) DeleteTaskByID(ctx context.Context, id string) (Task, error) {
 }
 
 const getAllCompletedTask = `-- name: GetAllCompletedTask :many
-SELECT id, name, type, status, data, createdat, updatedat FROM Task WHERE status = 'SUCCESS' ORDER BY updatedAt DESC
+SELECT id, name, type, status, data, payload, createdat, updatedat FROM Task WHERE status = 'SUCCESS' ORDER BY updatedAt DESC
 `
 
 func (q *Queries) GetAllCompletedTask(ctx context.Context) ([]Task, error) {
@@ -297,6 +264,7 @@ func (q *Queries) GetAllCompletedTask(ctx context.Context) ([]Task, error) {
 			&i.Type,
 			&i.Status,
 			&i.Data,
+			&i.Payload,
 			&i.Createdat,
 			&i.Updatedat,
 		); err != nil {
@@ -311,7 +279,7 @@ func (q *Queries) GetAllCompletedTask(ctx context.Context) ([]Task, error) {
 }
 
 const getAllPendingTask = `-- name: GetAllPendingTask :many
-SELECT id, name, type, status, data, createdat, updatedat FROM Task WHERE status != 'SUCCESS' ORDER BY createdAt ASC
+SELECT id, name, type, status, data, payload, createdat, updatedat FROM Task WHERE status != 'SUCCESS' ORDER BY createdAt ASC
 `
 
 func (q *Queries) GetAllPendingTask(ctx context.Context) ([]Task, error) {
@@ -329,6 +297,54 @@ func (q *Queries) GetAllPendingTask(ctx context.Context) ([]Task, error) {
 			&i.Type,
 			&i.Status,
 			&i.Data,
+			&i.Payload,
+			&i.Createdat,
+			&i.Updatedat,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllTasks = `-- name: GetAllTasks :many
+SELECT id, name, type, status, data, payload, createdat, updatedat FROM Task 
+ORDER BY 
+  CASE status
+    WHEN 'STARTED' THEN 1
+    WHEN 'FAILURE' THEN 2
+    WHEN 'RETRY' THEN 3
+    WHEN 'SUCCESS' THEN 4
+    WHEN 'PENDING' THEN 5
+  END ASC,
+  CASE type
+    WHEN 'REQUEST' THEN 1
+    WHEN 'PIPELINE' THEN 2
+  END ASC,
+  name DESC, 
+  updatedAt DESC
+`
+
+func (q *Queries) GetAllTasks(ctx context.Context) ([]Task, error) {
+	rows, err := q.db.Query(ctx, getAllTasks)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Task
+	for rows.Next() {
+		var i Task
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Type,
+			&i.Status,
+			&i.Data,
+			&i.Payload,
 			&i.Createdat,
 			&i.Updatedat,
 		); err != nil {
@@ -425,6 +441,40 @@ func (q *Queries) GetArchivesByMangaID(ctx context.Context, mangaid string) ([]A
 		return nil, err
 	}
 	return items, nil
+}
+
+const getChapterByID = `-- name: GetChapterByID :one
+SELECT 
+    c.id, c.number, c.url, c.mangaid, c.createdat, c.updatedat,
+    m.title AS title
+FROM Chapter c
+INNER JOIN Manga m ON c.mangaId = m.id
+WHERE c.id = $1
+`
+
+type GetChapterByIDRow struct {
+	ID        string
+	Number    float64
+	Url       string
+	Mangaid   string
+	Createdat pgtype.Timestamp
+	Updatedat pgtype.Timestamp
+	Title     pgtype.Text
+}
+
+func (q *Queries) GetChapterByID(ctx context.Context, id string) (GetChapterByIDRow, error) {
+	row := q.db.QueryRow(ctx, getChapterByID, id)
+	var i GetChapterByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.Number,
+		&i.Url,
+		&i.Mangaid,
+		&i.Createdat,
+		&i.Updatedat,
+		&i.Title,
+	)
+	return i, err
 }
 
 const getChapterByIndexAndManga = `-- name: GetChapterByIndexAndManga :one
@@ -712,6 +762,26 @@ func (q *Queries) GetPagesByRangeAndMangaID(ctx context.Context, arg GetPagesByR
 	return items, nil
 }
 
+const getTaskByID = `-- name: GetTaskByID :one
+SELECT id, name, type, status, data, payload, createdat, updatedat FROM Task WHERE id = $1
+`
+
+func (q *Queries) GetTaskByID(ctx context.Context, id string) (Task, error) {
+	row := q.db.QueryRow(ctx, getTaskByID, id)
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Type,
+		&i.Status,
+		&i.Data,
+		&i.Payload,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
 const listMangaDashboard = `-- name: ListMangaDashboard :many
 SELECT
     m.id                          AS manga_id,
@@ -908,6 +978,40 @@ func (q *Queries) UpdateMangaByID(ctx context.Context, arg UpdateMangaByIDParams
 	return i, err
 }
 
+const updatePage = `-- name: UpdatePage :one
+UPDATE Page SET url = $3, altText = $4, filePath = $5 WHERE index = $1 AND chapterId = $2 RETURNING index, url, alttext, filepath, downloadedat, chapterid, createdat, updatedat
+`
+
+type UpdatePageParams struct {
+	Index     int32
+	Chapterid string
+	Url       string
+	Alttext   pgtype.Text
+	Filepath  string
+}
+
+func (q *Queries) UpdatePage(ctx context.Context, arg UpdatePageParams) (Page, error) {
+	row := q.db.QueryRow(ctx, updatePage,
+		arg.Index,
+		arg.Chapterid,
+		arg.Url,
+		arg.Alttext,
+		arg.Filepath,
+	)
+	var i Page
+	err := row.Scan(
+		&i.Index,
+		&i.Url,
+		&i.Alttext,
+		&i.Filepath,
+		&i.Downloadedat,
+		&i.Chapterid,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
 const updatePageDownloadedAt = `-- name: UpdatePageDownloadedAt :one
 UPDATE Page SET downloadedAt = $3 WHERE index = $1 AND chapterId = $2 RETURNING index, url, alttext, filepath, downloadedat, chapterid, createdat, updatedat
 `
@@ -935,7 +1039,7 @@ func (q *Queries) UpdatePageDownloadedAt(ctx context.Context, arg UpdatePageDown
 }
 
 const updateTaskByID = `-- name: UpdateTaskByID :one
-UPDATE Task SET data = $2, status = $3 WHERE id = $1 RETURNING id, name, type, status, data, createdat, updatedat
+UPDATE Task SET data = $2, status = $3 WHERE id = $1 RETURNING id, name, type, status, data, payload, createdat, updatedat
 `
 
 type UpdateTaskByIDParams struct {
@@ -953,6 +1057,7 @@ func (q *Queries) UpdateTaskByID(ctx context.Context, arg UpdateTaskByIDParams) 
 		&i.Type,
 		&i.Status,
 		&i.Data,
+		&i.Payload,
 		&i.Createdat,
 		&i.Updatedat,
 	)

@@ -165,6 +165,21 @@ func DownloadHandler(w http.ResponseWriter, r *http.Request) {
 	io.Copy(w, file)
 }
 
+func TaskPage(w http.ResponseWriter, r *http.Request) {
+	queries := db.GetDB()
+
+	data, err := queries.DashboardTaskDetails(context.Background())
+	if err != nil {
+		data = generated.DashboardTaskDetailsRow{}
+	}
+	tasks, err := queries.GetAllTasks(context.Background())
+
+	err = pages.TaskPage(data, tasks).Render(r.Context(), w)
+	if err != nil {
+		http.Error(w, "Failed to generate HTML", http.StatusInternalServerError)
+	}
+}
+
 // func GetDirectoryContentHTML(w http.ResponseWriter, r *http.Request) {
 // 	resPath := strings.TrimPrefix(r.URL.Path, "/directory")
 // 	directoryItems, err := utils.GetFolderContent(resPath)

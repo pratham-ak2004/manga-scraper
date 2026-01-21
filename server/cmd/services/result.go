@@ -26,8 +26,10 @@ func HandleTaskResult(task string, id string, data CeleryResult) error {
 		remove, err = TasksPipelineChapterScrapeResult(data.Result)
 	case "tasks.pipeline.page.download":
 		remove, err = TasksPipelinePageDownloadResult(data)
+
 	case "tasks.archive.manga.cbz":
 		remove, err = TasksRequestMangaArchiveResult(data.Result)
+
 	default:
 		logger.Logger.Println("Default")
 	}
@@ -101,11 +103,6 @@ func TasksPipelineMangaScrapeResult(data json.RawMessage) (bool, error) {
 				Mangaid: manga.ID,
 			})
 
-			if err != nil && err.Error() != "no rows in result set" {
-				logger.Logger.Println(logger.Colors["yellow"] + "Failed to fetch chapter from db for " + manga.ID + " - " + val.Number.String() + " : " + err.Error() + logger.Colors["reset"])
-				return false
-			}
-
 			// New Chapter
 			if err != nil && err.Error() == "no rows in result set" {
 				// Create chapter in db
@@ -122,11 +119,7 @@ func TasksPipelineMangaScrapeResult(data json.RawMessage) (bool, error) {
 					// Send Task to scrape chapter
 					utils.WithTicker(func() bool {
 						err = Celery.SendNewPipelineChapterTask(chapter.ID, chapter.Url, manga.Title.String, strconv.FormatFloat(chapter.Number, 'f', 5, 32))
-						if err != nil {
-							// logger.Logger.Println(logger.Colors["yellow"] + "Failed to send scrape task for chapter " + chapter.ID + " : " + err.Error())
-							return false
-						}
-						return true
+						return err == nil
 					})
 				}
 
@@ -143,11 +136,7 @@ func TasksPipelineMangaScrapeResult(data json.RawMessage) (bool, error) {
 				} else {
 					utils.WithTicker(func() bool {
 						err = Celery.SendNewPipelineChapterTask(chapter.ID, chapter.Url, manga.Title.String, strconv.FormatFloat(chapter.Number, 'f', 5, 32))
-						if err != nil {
-							// logger.Logger.Println(logger.Colors["yellow"] + "Failed to send scrape task for chapter " + chapter.ID + " : " + err.Error())
-							return false
-						}
-						return true
+						return err == nil
 					})
 				}
 			}
@@ -196,19 +185,15 @@ func TasksPipelineChapterScrapeResult(data json.RawMessage) (bool, error) {
 					// Send Task to scrape chapter
 					utils.WithTicker(func() bool {
 						err = Celery.SendNewPipelinePageDownloadTask(page.Url, int(page.Index), page.Filepath, page.Chapterid)
-						if err != nil {
-							// logger.Logger.Println(logger.Colors["yellow"] + "Failed to send download task for page " + page.Url + " : " + err.Error())
-							return false
-						}
-						return true
+						return err == nil
 					})
 				}
 			} else if page.Url != val.Link {
-				page, err := queries.CreatePageIfNotExists(context.Background(), generated.CreatePageIfNotExistsParams{
+				page, err := queries.UpdatePage(context.Background(), generated.UpdatePageParams{
 					Index:     int32(val.Index),
+					Chapterid: result.Payload.ID,
 					Url:       val.Link,
 					Alttext:   pgtype.Text{String: val.AltText, Valid: true},
-					Chapterid: result.Payload.ID,
 					Filepath:  val.FilePath,
 				})
 
@@ -219,11 +204,7 @@ func TasksPipelineChapterScrapeResult(data json.RawMessage) (bool, error) {
 					// Send Task to scrape chapter
 					utils.WithTicker(func() bool {
 						err = Celery.SendNewPipelinePageDownloadTask(page.Url, int(page.Index), page.Filepath, page.Chapterid)
-						if err != nil {
-							// logger.Logger.Println(logger.Colors["yellow"] + "Failed to send download task for page " + page.Url + " : " + err.Error())
-							return false
-						}
-						return true
+						return err == nil
 					})
 				}
 			}

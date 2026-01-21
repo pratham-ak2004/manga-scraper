@@ -20,17 +20,21 @@ func bindAllRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/dashboard/manga", routes.GET(handlers.MangaListPage))
 	mux.HandleFunc("/dashboard/manga/{id}", routes.GET(handlers.MangaPage))
 	mux.HandleFunc("/dashboard/explorer/", routes.GET(handlers.FilesHandler))
+	mux.HandleFunc("/dashboard/tasks", routes.GET(handlers.TaskPage))
 	// TODO: mux.HandleFunc("/manga/read/", routes.GET(handlers.ReadChapter()))
 
 	mux.HandleFunc("/manga/chapters/", routes.GET(handlers.MangaChaptersList))
 	mux.HandleFunc("/manga/archives/", routes.GET(handlers.MangaArchivesList))
 	mux.HandleFunc("/archives/download/", routes.GET(handlers.DownloadHandler))
 	mux.HandleFunc("/directory/", routes.GET(handlers.DirectoryList))
-	mux.HandleFunc("/tasks", routes.GET(handlers.TaskDetailsTempl))
+	mux.HandleFunc("/task/status", routes.GET(handlers.TaskDetailsTempl))
+	mux.HandleFunc("/task/list", routes.GET(handlers.TaskListTempl))
 
 	mux.HandleFunc("/api/v1/manga", routes.POST(handlers.NewMangaLinkHandler))
-	mux.HandleFunc("/api/v1/chapter", routes.POST(handlers.NewChapterLinkHandler))
 	mux.HandleFunc("/api/v1/archive", routes.POST(handlers.ArchiveMangaHandler))
+	mux.HandleFunc("/api/v1/eval/manga", routes.POST(handlers.MangaEvalHandler))
+	mux.HandleFunc("/api/v1/eval/chapter", routes.POST(handlers.MangaEvalHandler))
+	mux.HandleFunc("/api/v1/eval/task", routes.POST(handlers.TaskEvalHandler))
 
 	assetsFs := http.FileServer(http.Dir("public/assets/"))
 	mux.HandleFunc("/assets/", func(w http.ResponseWriter, r *http.Request) {

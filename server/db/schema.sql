@@ -1,4 +1,4 @@
--- Active: 1767429363376@@127.0.0.1@5432@manga_db
+-- Active: 1768887792894@@10.171.67.191@5432@manga_db
 -- CREATE DATABASE manga_scraper;
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -27,7 +27,7 @@ CREATE INDEX manga_index ON Manga (title, status);
 CREATE TABLE IF NOT EXISTS Chapter (
     id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
     number FLOAT NOT NULL,
-    url TEXT UNIQUE NOT NULL,
+    url TEXT NOT NULL,
 
     mangaId VARCHAR(36) NOT NULL REFERENCES Manga(id) ON DELETE CASCADE,
     createdAt TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -40,7 +40,7 @@ CREATE INDEX chapter_index ON Chapter (mangaId, number);
 
 CREATE TABLE IF NOT EXISTS Page (
     index INT NOT NULL,
-    url TEXT UNIQUE NOT NULL,
+    url TEXT NOT NULL,
     
     altText VARCHAR(255),
     filePath TEXT NOT NULL,
@@ -74,12 +74,13 @@ CREATE TABLE Archive (
 CREATE INDEX archive_index ON Archive(mangaId, startChapter, endChapter);
 
 CREATE TABLE IF NOT EXISTS Task (
-    id TEXT UNIQUE NOT NULL,
+    id TEXT UNIQUE PRIMARY KEY NOT NULL,
 
     name VARCHAR(255) NOT NULL,
     type "TaskType" DEFAULT 'REQUEST',
     status "TaskStatus" DEFAULT 'PENDING',
     data JSON,
+    payload JSON,
 
     createdAt TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP

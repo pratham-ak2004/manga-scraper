@@ -235,6 +235,7 @@ type Task struct {
 	Type      NullTaskType
 	Status    NullTaskStatus
 	Data      interface{}
+	Payload   interface{}
 	Createdat pgtype.Timestamp
 	Updatedat pgtype.Timestamp
 }

@@ -173,14 +173,15 @@ func CreateNewCeleryConnection() {
 	}
 }
 
-func CreateTask(id string, task string, taskType generated.TaskType) {
+func CreateTask(id string, task string, taskType generated.TaskType, payload any) {
 	utils.WithTicker(func() bool {
 		queries := db.GetDB()
 
 		_, err := queries.CreateTask(context.Background(), generated.CreateTaskParams{
-			ID:   id,
-			Name: task,
-			Type: generated.NullTaskType{TaskType: taskType, Valid: true},
+			ID:      id,
+			Name:    task,
+			Type:    generated.NullTaskType{TaskType: taskType, Valid: true},
+			Payload: payload,
 		})
 
 		if err == nil {

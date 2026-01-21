@@ -2,14 +2,15 @@ package handlers
 
 import (
 	"context"
+	"net/http"
+	"strings"
+
 	"download-server/cmd/utils"
 	"download-server/db"
 	"download-server/db/generated"
 	"download-server/internal/logger"
 	"download-server/views/components"
 	"download-server/views/pages"
-	"net/http"
-	"strings"
 )
 
 func MangaChaptersList(w http.ResponseWriter, r *http.Request) {
@@ -92,6 +93,20 @@ func TaskDetailsTempl(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = components.TaskDetails(details).Render(r.Context(), w)
+	if err != nil {
+		http.Error(w, "Failed to generate HTML", http.StatusInternalServerError)
+	}
+}
+
+func TaskListTempl(w http.ResponseWriter, r *http.Request) {
+	queries := db.GetDB()
+
+	data, err := queries.GetAllTasks(context.Background())
+	if err != nil {
+		data = []generated.Task{}
+	}
+
+	err = components.TaskList(data).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, "Failed to generate HTML", http.StatusInternalServerError)
 	}

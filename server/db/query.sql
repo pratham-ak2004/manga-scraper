@@ -9,7 +9,7 @@ INSERT INTO Chapter (number, url, mangaId) VALUES ($1, $2, $3) RETURNING *;
 INSERT INTO Page (index, url, filePath, chapterId, altText) VALUES ($1, $2, $3, $4, $5) RETURNING *;
 
 -- name: CreateTask :one
-INSERT INTO Task (id, name, type) VALUES ($1, $2, $3) RETURNING *;
+INSERT INTO Task (id, name, type, payload) VALUES ($1, $2, $3, $4) RETURNING *;
 
 -- name: CreateArchiveWithRange :one
 INSERT INTO Archive (mangaId, filePath, startChapter, endChapter, complete) VALUES ($1, $2, $3, $4, $5) RETURNING *;
@@ -22,6 +22,9 @@ UPDATE Chapter SET url = $2 WHERE id = $1 RETURNING *;
 
 -- name: UpdatePageDownloadedAt :one
 UPDATE Page SET downloadedAt = $3 WHERE index = $1 AND chapterId = $2 RETURNING *;
+
+-- name: UpdatePage :one
+UPDATE Page SET url = $3, altText = $4, filePath = $5 WHERE index = $1 AND chapterId = $2 RETURNING *;
 
 -- name: UpdateTaskByID :one
 UPDATE Task SET data = $2, status = $3 WHERE id = $1 RETURNING *;
@@ -37,16 +40,6 @@ DO UPDATE SET
     url = EXCLUDED.url
 RETURNING *;
 
--- name: CreatePageIfNotExists :one
-INSERT INTO Page (index, url, altText, chapterId, filePath)
-VALUES ($1, $2, $3, $4, $5)
-ON CONFLICT (index, chapterId) 
-DO UPDATE SET 
-    url = EXCLUDED.url,
-    altText = EXCLUDED.altText,
-    filePath = EXCLUDED.filePath
-RETURNING *;
-
 -- name: GetMangaByURL :one
 SELECT * FROM Manga WHERE url = $1;
 
@@ -58,6 +51,14 @@ SELECT * FROM Manga;
 
 -- name: GetChapterByURL :one
 SELECT * FROM Chapter WHERE url = $1;
+
+-- name: GetChapterByID :one
+SELECT 
+    c.*,
+    m.title AS title
+FROM Chapter c
+INNER JOIN Manga m ON c.mangaId = m.id
+WHERE c.id = $1;
 
 -- name: GetChapterByIndexAndManga :one
 SELECT * FROM Chapter WHERE number = $1 AND mangaId = $2;
@@ -82,6 +83,26 @@ SELECT * FROM Task WHERE status != 'SUCCESS' ORDER BY createdAt ASC;
 
 -- name: GetAllCompletedTask :many
 SELECT * FROM Task WHERE status = 'SUCCESS' ORDER BY updatedAt DESC;
+
+-- name: GetAllTasks :many
+SELECT * FROM Task 
+ORDER BY 
+  CASE status
+    WHEN 'STARTED' THEN 1
+    WHEN 'FAILURE' THEN 2
+    WHEN 'RETRY' THEN 3
+    WHEN 'SUCCESS' THEN 4
+    WHEN 'PENDING' THEN 5
+  END ASC,
+  CASE type
+    WHEN 'REQUEST' THEN 1
+    WHEN 'PIPELINE' THEN 2
+  END ASC,
+  name DESC, 
+  updatedAt DESC;
+
+-- name: GetTaskByID :one
+SELECT * FROM Task WHERE id = $1;
 
 -- name: GetArchiveByMangaID :one
 SELECT * FROM Archive WHERE mangaId = $1 AND startChapter = $2 AND endChapter = $3;

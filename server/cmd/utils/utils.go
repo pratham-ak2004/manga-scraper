@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"mime"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
@@ -136,4 +137,9 @@ func WithTicker(action func() bool) {
 			ticker.Reset(time.Duration(waitTime) * time.Second)
 		}
 	}
+}
+
+func CreateToast(w http.ResponseWriter, toastType string, body string) {
+	w.Header().Set("HXToaster-Body", body)
+	w.Header().Set("HXToaster-Type", toastType)
 }
