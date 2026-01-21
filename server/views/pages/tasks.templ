@@ -1,0 +1,73 @@
+package pages
+
+import (
+"download-server/views/layout"
+"download-server/views/components"
+"download-server/db/generated"
+)
+
+templ TaskPage(details generated.DashboardTaskDetailsRow, tasks []generated.Task) {
+@layout.DashBoard("Tasks"){
+<div>
+  <div class="mb-6 sm:mb-8">
+    <div class="mb-2">
+      <h3 class="text-xl font-semibold text-foreground">Task Status</h3>
+      <p class="text-sm text-muted-foreground">Background task execution overview</p>
+    </div>
+    <div class="flex items-center gap-2 mb-2 justify-between">
+      <div>
+        <label for="refreshInterval" class="text-sm text-muted-foreground">Refresh every:</label>
+        <select id="refreshInterval" class="border rounded px-2 py-1 text-sm">
+          <option value="0">None</option>
+          <option value="1">1s</option>
+          <option value="5">5s</option>
+          <option value="10" selected>10s</option>
+          <option value="30">30s</option>
+          <option value="60">1m</option>
+        </select>
+      </div>
+    </div>
+    <div id="task-status-container" hx-get="/task/status" hx-trigger="every 10s, refresh" hx-swap="innerHTML">
+      @components.TaskDetails(details)
+    </div>
+  </div>
+</div>
+
+<!-- Task List -->
+<div class="mb-6 sm:mb-8">
+  <div class="mb-4">
+    <div class="mb-2">
+      <h3 class="text-xl font-semibold text-foreground">All Tasks</h3>
+      <p class="text-sm text-muted-foreground">View and manage all background tasks</p>
+    </div>
+  </div>
+  <div id="task-list-container" hx-get="/task/list" hx-trigger="every 10s, refresh" hx-swap="innerHTML">
+    @components.TaskList(tasks)
+  </div>
+</div>
+<script>
+  document.getElementById('refreshInterval').addEventListener('change', function () {
+    // Get the new interval value from the dropdown
+    var newInterval = this.value;
+
+    // Update the hx-trigger attribute of the target element
+    var statusContainer = document.getElementById('task-status-container');
+    if (newInterval === '0') {
+      statusContainer.setAttribute('hx-trigger', 'none');
+    } else {
+      statusContainer.setAttribute('hx-trigger', 'every ' + newInterval + 's, refresh');
+    }
+
+    var listContainer = document.getElementById('task-list-container');
+    if (newInterval === '0') {
+      listContainer.setAttribute('hx-trigger', 'none');
+    } else {
+      listContainer.setAttribute('hx-trigger', 'every ' + newInterval + 's, refresh');
+    }
+    // Force htmx to re-process the element and its new attributes
+    htmx.process(statusContainer);
+    htmx.process(listContainer);
+  });
+</script>
+}
+}

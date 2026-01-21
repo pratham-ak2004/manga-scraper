@@ -5,14 +5,17 @@ import (
 "download-server/db/generated"
 "download-server/views/layout"
 "download-server/views/components/ui"
+"download-server/views/components/svg"
 )
 
 templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
 @layout.DashBoard(manga.Title.String) {
 <!-- Back Button -->
 <div class="mb-6">
-  <a href="/dashboard/manga" class="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <a href="/dashboard/manga"
+    class="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:-translate-x-1 transition-transform" fill="none"
+      viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
     </svg>
     <span class="font-medium">Back to Manga List</span>
@@ -39,11 +42,14 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
         <div class="absolute top-4 right-4">
           if manga.Status.Valid {
           if manga.Status.Status == generated.StatusCOMPLETED {
-          <span class="px-3 py-1.5 text-sm font-semibold rounded-full bg-success/90 text-success-foreground shadow-lg backdrop-blur-sm border border-success/20">Completed</span>
+          <span
+            class="px-3 py-1.5 text-sm font-semibold rounded-full bg-success/90 text-success-foreground shadow-lg backdrop-blur-sm border border-success/20">Completed</span>
           } else if manga.Status.Status == generated.StatusONGOING {
-          <span class="px-3 py-1.5 text-sm font-semibold rounded-full bg-primary/90 text-primary-foreground shadow-lg backdrop-blur-sm border border-primary/20">Ongoing</span>
+          <span
+            class="px-3 py-1.5 text-sm font-semibold rounded-full bg-primary/90 text-primary-foreground shadow-lg backdrop-blur-sm border border-primary/20">Ongoing</span>
           } else {
-          <span class="px-3 py-1.5 text-sm font-semibold rounded-full bg-warning/90 text-warning-foreground shadow-lg backdrop-blur-sm border border-warning/20">Upcoming</span>
+          <span
+            class="px-3 py-1.5 text-sm font-semibold rounded-full bg-warning/90 text-warning-foreground shadow-lg backdrop-blur-sm border border-warning/20">Upcoming</span>
           }
           }
         </div>
@@ -99,7 +105,9 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
             for _, author := range authors {
             if authorMap, ok := author.(map[string]interface{}); ok {
             if name, ok := authorMap["name"].(string); ok {
-            <span class="px-3 py-1.5 bg-secondary text-secondary-foreground rounded-lg text-sm font-medium border border-border">{ name }</span>
+            <span
+              class="px-3 py-1.5 bg-secondary text-secondary-foreground rounded-lg text-sm font-medium border border-border">{
+              name }</span>
             }
             }
             }
@@ -114,7 +122,8 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
           for _, t := range types {
           if typeMap, ok := t.(map[string]interface{}); ok {
           if name, ok := typeMap["name"].(string); ok {
-          <span class="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium border border-primary/20">{ name }</span>
+          <span class="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium border border-primary/20">{
+            name }</span>
           }
           }
           }
@@ -129,7 +138,9 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
             for _, tag := range tags {
             if tagMap, ok := tag.(map[string]interface{}); ok {
             if name, ok := tagMap["name"].(string); ok {
-            <span class="px-3 py-1.5 bg-accent text-accent-foreground rounded-lg text-sm font-medium border border-border hover:bg-accent/80 transition-colors">{ name }</span>
+            <span
+              class="px-3 py-1.5 bg-accent text-accent-foreground rounded-lg text-sm font-medium border border-border hover:bg-accent/80 transition-colors">{
+              name }</span>
             }
             }
             }
@@ -142,7 +153,7 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
 
       <!-- Action Buttons -->
       <div class="flex flex-col sm:flex-row gap-3">
-        <a href={ templ.SafeURL(manga.Url) } target="_blank" class="flex-1">
+        <a href={ templ.SafeURL(manga.Url) } target="_blank" class="grow w-full">
           @ui.Button(ui.ButtonProps{
           Variant: ui.ButtonDefault,
           Size: ui.ButtonSizeLg,
@@ -157,8 +168,16 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
           </svg>
           }
         </a>
+        @ui.Button(ui.ButtonProps{
+        Variant: ui.ButtonSecondary,
+        Size: ui.ButtonSizeLg,
+        Class: "w-full border",
+        HxPost: "/api/v1/eval/manga?id=" + manga.ID,
+        }) {
+        Update
+        @svg.Rotate()
+        }
       </div>
-
       <!-- Additional Info -->
       <div class="mt-6 pt-6 border-t border-border">
         <div class="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
@@ -185,7 +204,8 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
     <div class="flex items-center gap-3">
       <div class="p-2 bg-primary/10 rounded-lg">
         <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
         </svg>
       </div>
       <div>
@@ -199,7 +219,7 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
   <div class="p-6">
     <form hx-post={ "/api/v1/archive" } hx-target="#archive-result" hx-swap="innerHTML">
       <input type="text" value={ manga.ID } hidden name="manga-id" id="manga-id" />
-      
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <!-- Start Chapter Input -->
         <div class="space-y-2">
@@ -220,7 +240,8 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
         <div class="space-y-2">
           <label for="end" class="flex items-center gap-2 text-sm font-medium text-foreground">
             <svg class="w-4 h-4 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12">
+              </path>
             </svg>
             End Chapter
           </label>
@@ -245,10 +266,12 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
           </div>
           <div class="flex-1">
             <div class="flex items-center gap-2">
-              <span class="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Full Archive</span>
+              <span class="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Full
+                Archive</span>
               <span class="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded">Recommended</span>
             </div>
-            <p class="text-xs text-muted-foreground mt-1">Include all available chapters. Start and end values will be ignored.</p>
+            <p class="text-xs text-muted-foreground mt-1">Include all available chapters. Start and end values will be
+              ignored.</p>
           </div>
         </label>
       </div>
@@ -256,23 +279,26 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
       <!-- Action Buttons -->
       <div class="flex flex-col sm:flex-row gap-3">
         @ui.Button(ui.ButtonProps{
-          Type: "submit",
-          Variant: ui.ButtonDefault,
-          Size: ui.ButtonSizeLg,
-          Class: "flex-1 sm:flex-none",
+        Type: "submit",
+        Variant: ui.ButtonDefault,
+        Size: ui.ButtonSizeLg,
+        Class: "flex-1 sm:flex-none",
         }) {
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z"></path>
-          </svg>
-          Create Archive
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z">
+          </path>
+        </svg>
+        Create Archive
         }
-        <button type="reset" class="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground border border-border rounded-lg hover:bg-muted/50 transition-colors">
+        <button type="reset"
+          class="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground border border-border rounded-lg hover:bg-muted/50 transition-colors">
           Reset Form
         </button>
       </div>
 
       <!-- Result Container -->
-      <div id="archive-result" class="mt-6"></div>
+      <div id="archive-result" class="mt-6 hidden"></div>
     </form>
   </div>
 </div>
@@ -282,7 +308,7 @@ templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
   function toggleFullArchiveInputs(isChecked) {
     const startInput = document.getElementById('start');
     const endInput = document.getElementById('end');
-    
+
     if (isChecked) {
       startInput.disabled = true;
       endInput.disabled = true;

@@ -5,6 +5,7 @@ import (
 "download-server/cmd/utils"
 "download-server/db/generated"
 "download-server/views/components"
+"download-server/views/components/svg"
 "fmt"
 )
 
@@ -20,10 +21,7 @@ templ Home(data utils.DashBoardData, taskDetails generated.DashboardTaskDetailsR
         <p class="text-3xl font-bold text-primary mt-2">{ fmt.Sprintf("%d", data.Total.Manga) }</p>
       </div>
       <div class="bg-primary/10 p-3 rounded-lg group-hover:bg-primary/15 transition-colors">
-        <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-        </svg>
+        @svg.Book()
       </div>
     </div>
   </div>
@@ -36,10 +34,7 @@ templ Home(data utils.DashBoardData, taskDetails generated.DashboardTaskDetailsR
         <p class="text-3xl font-bold text-success mt-2">{ fmt.Sprintf("%d", data.Total.Chapter) }</p>
       </div>
       <div class="bg-success/10 p-3 rounded-lg group-hover:bg-success/15 transition-colors">
-        <svg class="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
+        @svg.TextFile()
       </div>
     </div>
   </div>
@@ -52,10 +47,7 @@ templ Home(data utils.DashBoardData, taskDetails generated.DashboardTaskDetailsR
         <p class="text-3xl font-bold text-warning mt-2">{ fmt.Sprintf("%d", data.Total.Pages) }</p>
       </div>
       <div class="bg-warning/10 p-3 rounded-lg group-hover:bg-warning/15 transition-colors">
-        <svg class="w-6 h-6 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-        </svg>
+       @svg.EmptyFile()
       </div>
     </div>
   </div>
@@ -72,10 +64,11 @@ templ Home(data utils.DashBoardData, taskDetails generated.DashboardTaskDetailsR
       </span>
     </div>
     <div class="w-full bg-primary/10 rounded-full h-3 overflow-hidden">
-      <div class="bg-gradient-to-r from-primary to-primary/70 h-3 rounded-full transition-all duration-500 ease-out" style={ fmt.Sprintf("width: %d%%",
-        calculatePercentage(data.Status.Ongoing, data.Total.Manga)) }></div>
+      <div class="bg-gradient-to-r from-primary to-primary/70 h-3 rounded-full transition-all duration-500 ease-out"
+        style={ fmt.Sprintf("width: %d%%", calculatePercentage(data.Status.Ongoing, data.Total.Manga)) }></div>
     </div>
-    <p class="text-xs text-muted-foreground mt-2">{ fmt.Sprintf("%d%%", calculatePercentage(data.Status.Ongoing, data.Total.Manga)) } of total manga</p>
+    <p class="text-xs text-muted-foreground mt-2">{ fmt.Sprintf("%d%%", calculatePercentage(data.Status.Ongoing,
+      data.Total.Manga)) } of total manga</p>
   </div>
 
   <div class="bg-card rounded-xl border border-success/20 shadow-sm p-6 hover:shadow-md transition-all group">
@@ -86,10 +79,11 @@ templ Home(data utils.DashBoardData, taskDetails generated.DashboardTaskDetailsR
       </span>
     </div>
     <div class="w-full bg-success/10 rounded-full h-3 overflow-hidden">
-      <div class="bg-gradient-to-r from-success to-success/70 h-3 rounded-full transition-all duration-500 ease-out" style={ fmt.Sprintf("width: %d%%",
-        calculatePercentage(data.Status.Completed, data.Total.Manga)) }></div>
+      <div class="bg-gradient-to-r from-success to-success/70 h-3 rounded-full transition-all duration-500 ease-out"
+        style={ fmt.Sprintf("width: %d%%", calculatePercentage(data.Status.Completed, data.Total.Manga)) }></div>
     </div>
-    <p class="text-xs text-muted-foreground mt-2">{ fmt.Sprintf("%d%%", calculatePercentage(data.Status.Completed, data.Total.Manga)) } of total manga</p>
+    <p class="text-xs text-muted-foreground mt-2">{ fmt.Sprintf("%d%%", calculatePercentage(data.Status.Completed,
+      data.Total.Manga)) } of total manga</p>
   </div>
 
   <div class="bg-card rounded-xl border border-warning/20 shadow-sm p-6 hover:shadow-md transition-all group">
@@ -100,16 +94,62 @@ templ Home(data utils.DashBoardData, taskDetails generated.DashboardTaskDetailsR
       </span>
     </div>
     <div class="w-full bg-warning/10 rounded-full h-3 overflow-hidden">
-      <div class="bg-gradient-to-r from-warning to-warning/70 h-3 rounded-full transition-all duration-500 ease-out" style={ fmt.Sprintf("width: %d%%",
-        calculatePercentage(data.Status.Upcoming, data.Total.Manga)) }></div>
+      <div class="bg-gradient-to-r from-warning to-warning/70 h-3 rounded-full transition-all duration-500 ease-out"
+        style={ fmt.Sprintf("width: %d%%", calculatePercentage(data.Status.Upcoming, data.Total.Manga)) }></div>
     </div>
-    <p class="text-xs text-muted-foreground mt-2">{ fmt.Sprintf("%d%%", calculatePercentage(data.Status.Upcoming, data.Total.Manga)) } of total manga</p>
+    <p class="text-xs text-muted-foreground mt-2">{ fmt.Sprintf("%d%%", calculatePercentage(data.Status.Upcoming,
+      data.Total.Manga)) } of total manga</p>
   </div>
 </div>
 
 <!-- Task Overview -->
-<div  hx-get="/tasks" hx-trigger="every 10s" hx-swap="innerHTML">
-  @components.TaskDetails(taskDetails)
+<div>
+  <div class="mb-6 sm:mb-8">
+    <div class="mb-2">
+      <h3 class="text-xl font-semibold text-foreground">Task Status</h3>
+      <p class="text-sm text-muted-foreground">Background task execution overview</p>
+    </div>
+     <div class="flex items-center gap-2 mb-2 justify-between">
+     <div>
+        <label for="timeDropdown" class="text-sm text-muted-foreground">Refresh every:</label>
+        <select id="timeDropdown" class="border rounded px-2 py-1 text-sm">
+          <option value="0">None</option>
+          <option value="1">1s</option>
+          <option value="5">5s</option>
+          <option value="10" selected>10s</option>
+          <option value="30">30s</option>
+          <option value="60">1m</option>
+        </select>
+      </div>
+      <a href="/dashboard/tasks" class="flex flex-row justify-center items-center gap-2 text-muted-foreground">
+      tasks 
+      @svg.ExternalLink()
+      </a>
+    </div>
+    <div id="polling-element" hx-get="/task/status" hx-trigger="every 10s, refresh" hx-swap="innerHTML">
+      @components.TaskDetails(taskDetails)
+    </div>
+    <script>
+      document.getElementById('timeDropdown').addEventListener('change', function() {
+        // Get the new interval value from the dropdown
+        var newInterval = this.value;
+
+        // Update the hx-trigger attribute of the target element
+        var pollingElement = document.getElementById('polling-element');
+        if (newInterval === '0') {
+          pollingElement.setAttribute('hx-trigger', 'none');
+        } else {
+          pollingElement.setAttribute('hx-trigger', 'every ' + newInterval + 's, refresh');
+        }
+
+        // Force htmx to re-process the element and its new attributes
+        htmx.process(pollingElement);
+
+        // Trigger an immediate refresh
+        htmx.trigger(pollingElement, 'refresh');
+      });
+    </script>
+  </div>
 </div>
 
 <!-- Recent Manga List -->
@@ -123,10 +163,12 @@ templ Home(data utils.DashBoardData, taskDetails generated.DashboardTaskDetailsR
         <tr>
           <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Poster</th>
           <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Title</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Chapters</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Chapters
+          </th>
           <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Pages</th>
           <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Last Updated</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Last
+            Updated</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-border">
@@ -136,7 +178,8 @@ templ Home(data utils.DashBoardData, taskDetails generated.DashboardTaskDetailsR
             <div class="flex-shrink-0 h-24 w-16">
               if manga.Poster.Valid && manga.Poster.String != "" {
               <a href={ manga.Poster.String } target="_blank" rel="noreferrer">
-                <img class="h-24 w-16 object-cover rounded-lg shadow-sm border border-border" src={ manga.Poster.String } alt="Manga poster" />
+                <img class="h-24 w-16 object-cover rounded-lg shadow-sm border border-border" src={ manga.Poster.String
+                  } alt="Manga poster" />
               </a>
               } else {
               <div class="h-24 w-16 bg-muted rounded-lg flex items-center justify-center border border-border">
@@ -150,7 +193,8 @@ templ Home(data utils.DashBoardData, taskDetails generated.DashboardTaskDetailsR
           </td>
           <td class="px-6 py-4">
             <div class="text-sm font-medium text-foreground">
-              <a href={ templ.SafeURL("/dashboard/manga/" + manga.MangaID) } class="hover:text-primary transition-colors hover:underline">
+              <a href={ templ.SafeURL("/dashboard/manga/" + manga.MangaID) }
+                class="hover:text-primary transition-colors hover:underline">
                 if manga.Title.Valid {
                 { manga.Title.String }
                 } else {
@@ -168,20 +212,24 @@ templ Home(data utils.DashBoardData, taskDetails generated.DashboardTaskDetailsR
           <td class="px-6 py-4 whitespace-nowrap">
             if manga.Status.Valid {
             if manga.Status.Status == "COMPLETED" {
-            <span class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-success/10 text-success border border-success/20">
+            <span
+              class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-success/10 text-success border border-success/20">
               Completed
             </span>
             } else if manga.Status.Status == "ONGOING" {
-            <span class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary/10 text-primary border border-primary/20">
+            <span
+              class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary/10 text-primary border border-primary/20">
               Ongoing
             </span>
             } else {
-            <span class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-warning/10 text-warning border border-warning/20">
+            <span
+              class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-warning/10 text-warning border border-warning/20">
               Upcoming
             </span>
             }
             } else {
-            <span class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-muted text-muted-foreground border border-border">
+            <span
+              class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-muted text-muted-foreground border border-border">
               Unknown
             </span>
             }

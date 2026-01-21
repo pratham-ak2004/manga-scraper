@@ -179,19 +179,3 @@ func TaskPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to generate HTML", http.StatusInternalServerError)
 	}
 }
-
-// func GetDirectoryContentHTML(w http.ResponseWriter, r *http.Request) {
-// 	resPath := strings.TrimPrefix(r.URL.Path, "/directory")
-// 	directoryItems, err := utils.GetFolderContent(resPath)
-// 	if err != nil {
-// 		fmt.Println(err.Error())
-// 		w.WriteHeader(http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	err = components.SubContentList(directoryItems, resPath).Render(r.Context(), w)
-// 	if err != nil {
-// 		fmt.Println(err.Error())
-// 		w.WriteHeader(http.StatusInternalServerError)
-// 	}
-// }

@@ -1,0 +1,120 @@
+package components
+
+import (
+"download-server/db/generated"
+"download-server/views/components/ui"
+"download-server/views/components/svg"
+)
+
+templ TaskList(tasks []generated.Task) {
+<div class="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+  <div class="p-6 border-b border-border">
+    <h3 class="text-xl font-semibold text-foreground">All Tasks</h3>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead class="bg-muted/50 border-b border-border">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Task Name
+          </th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Type</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Created
+          </th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Updated
+          </th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border">
+        if len(tasks) == 0 {
+        <tr>
+          <td colspan="5" class="px-6 py-8 text-center">
+            <p class="text-muted-foreground">No tasks found</p>
+          </td>
+        </tr>
+        } else {
+        for _, task := range tasks {
+        <tr class="hover:bg-muted/50 transition-colors">
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm font-medium text-foreground">{ task.Name }</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            if task.Type.Valid {
+            <span
+              class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue/10 text-blue border border-blue/20">
+              { string(task.Type.TaskType) }
+            </span>
+            } else {
+            <span class="text-muted-foreground/50">-</span>
+            }
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            if task.Status.Valid {
+            switch task.Status.TaskStatus {
+            case generated.TaskStatusSUCCESS:
+            <span
+              class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-success/10 text-success border border-success/20">
+              Success
+            </span>
+            case generated.TaskStatusPENDING:
+            <span
+              class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-warning/10 text-warning border border-warning/20">
+              Pending
+            </span>
+            case generated.TaskStatusSTARTED:
+            <span
+              class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary/10 text-primary border border-primary/20">
+              Started
+            </span>
+            case generated.TaskStatusRETRY:
+            <span
+              class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow/10 text-yellow border border-yellow/20">
+              Retry
+            </span>
+            case generated.TaskStatusFAILURE:
+            <span
+              class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-destructive/10 text-destructive border border-destructive/20">
+              Failure
+            </span>
+            default:
+            <span class="text-muted-foreground/50">-</span>
+            }
+            } else {
+            <span class="text-muted-foreground/50">-</span>
+            }
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+            if task.Createdat.Valid {
+            { task.Createdat.Time.Format("Jan 02, 2006 15:04") }
+            } else {
+            <span class="text-muted-foreground/50">-</span>
+            }
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+            if task.Updatedat.Valid {
+            { task.Updatedat.Time.Format("Jan 02, 2006 15:04") }
+            } else {
+            <span class="text-muted-foreground/50">-</span>
+            }
+          </td>
+          <td>
+            if task.Status.Valid && task.Status.TaskStatus == generated.TaskStatusFAILURE {
+            @ui.Button(ui.ButtonProps{
+            Variant: ui.ButtonSecondary,
+            Size: ui.ButtonSizeSm,
+            Class: "w-fit border hover:border-foreground/50",
+            HxPost: "/api/v1/eval/task?id=" + task.ID,
+            }) {
+            @svg.Wrench()
+            }
+            }
+          </td>
+        </tr>
+        }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+}

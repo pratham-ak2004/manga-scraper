@@ -1,10 +1,9 @@
 package layout
 
 templ Scripts() {
-<script src="/assets/js/htmx.min.js"></script>
 <script>
   // HTMX configuration
-  document.body.addEventListener('htmx:afterSwap', function(evt) {
+  document.body.addEventListener('htmx:afterSwap', function (evt) {
     // Re-initialize any dynamic elements after HTMX swaps
     const themeToggleBtns = evt.detail.target.querySelectorAll('[data-theme-toggle]');
     themeToggleBtns.forEach(btn => {
@@ -12,4 +11,6 @@ templ Scripts() {
     });
   });
 </script>
+<script src="/assets/js/htmx.min.js"></script>
+<script src="/assets/js/htmx-toaster.min.js"></script>
 }
