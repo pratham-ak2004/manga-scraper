@@ -64,7 +64,7 @@ WHERE c.id = $1;
 SELECT * FROM Chapter WHERE number = $1 AND mangaId = $2;
 
 -- name: GetChaptersByMangaID :many
-SELECT * FROM Chapter WHERE mangaId = $1 ORDER BY number ASC;
+SELECT c.*, ( SELECT COUNT(*) FROM Page WHERE chapterId = c.id ) AS page_count FROM Chapter c WHERE mangaId = $1 ORDER BY number ASC;
 
 -- name: GetChaptersByMangaIDWithPageCount :many
 SELECT * FROM Chapter c LEFT JOIN (

@@ -519,18 +519,28 @@ func (q *Queries) GetChapterByURL(ctx context.Context, url string) (Chapter, err
 }
 
 const getChaptersByMangaID = `-- name: GetChaptersByMangaID :many
-SELECT id, number, url, mangaid, createdat, updatedat FROM Chapter WHERE mangaId = $1 ORDER BY number ASC
+SELECT c.id, c.number, c.url, c.mangaid, c.createdat, c.updatedat, ( SELECT COUNT(*) FROM Page WHERE chapterId = c.id ) AS page_count FROM Chapter c WHERE mangaId = $1 ORDER BY number ASC
 `
 
-func (q *Queries) GetChaptersByMangaID(ctx context.Context, mangaid string) ([]Chapter, error) {
+type GetChaptersByMangaIDRow struct {
+	ID        string
+	Number    float64
+	Url       string
+	Mangaid   string
+	Createdat pgtype.Timestamp
+	Updatedat pgtype.Timestamp
+	PageCount int64
+}
+
+func (q *Queries) GetChaptersByMangaID(ctx context.Context, mangaid string) ([]GetChaptersByMangaIDRow, error) {
 	rows, err := q.db.Query(ctx, getChaptersByMangaID, mangaid)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Chapter
+	var items []GetChaptersByMangaIDRow
 	for rows.Next() {
-		var i Chapter
+		var i GetChaptersByMangaIDRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Number,
@@ -538,6 +548,7 @@ func (q *Queries) GetChaptersByMangaID(ctx context.Context, mangaid string) ([]C
 			&i.Mangaid,
 			&i.Createdat,
 			&i.Updatedat,
+			&i.PageCount,
 		); err != nil {
 			return nil, err
 		}

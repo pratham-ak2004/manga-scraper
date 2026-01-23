@@ -6,4 +6,5 @@ Vinland Saga/
 __pycache__
 .env
 .env.*
+!.env.*example
 data/

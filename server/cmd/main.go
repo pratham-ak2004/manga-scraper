@@ -23,8 +23,8 @@ func bindAllRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/dashboard/tasks", routes.GET(handlers.TaskPage))
 	// TODO: mux.HandleFunc("/manga/read/", routes.GET(handlers.ReadChapter()))
 
-	mux.HandleFunc("/manga/chapters/", routes.GET(handlers.MangaChaptersList))
-	mux.HandleFunc("/manga/archives/", routes.GET(handlers.MangaArchivesList))
+	mux.HandleFunc("/manga/chapters/{id}", routes.GET(handlers.MangaChaptersList))
+	mux.HandleFunc("/manga/archives/{id}", routes.GET(handlers.MangaArchivesList))
 	mux.HandleFunc("/archives/download/", routes.GET(handlers.DownloadHandler))
 	mux.HandleFunc("/directory/", routes.GET(handlers.DirectoryList))
 	mux.HandleFunc("/task/status", routes.GET(handlers.TaskDetailsTempl))
