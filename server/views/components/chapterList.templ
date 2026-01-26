@@ -41,7 +41,7 @@ if len(chapters) == 0 {
       for _, chapter := range chapters {
       <tr class="hover:bg-muted/50 transition-colors">
         <td class="px-6 py-4 whitespace-nowrap">
-          <a href={ "/manga/read/" + chapter.ID } class="flex items-center gap-3 group">
+          <a href={ "/chapter/" + chapter.ID } class="flex items-center gap-3 group">
             <div
               class="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
               <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -56,6 +56,8 @@ if len(chapters) == 0 {
               <div class="text-xs text-muted-foreground">
                 ID: { chapter.ID[:8] }...
               </div>
+            </div>
+            <div id={"read-status-" + chapter.ID} class="">
             </div>
           </a>
         </td>
@@ -112,5 +114,46 @@ if len(chapters) == 0 {
     Showing <span class="font-medium text-foreground">{ fmt.Sprintf("%d", len(chapters)) }</span> chapters
   </p>
 </div>
+
+{{ chapterIDs := make([]string, len(chapters)) }}
+for i, chapter := range chapters {
+{{ chapterIDs[i] = chapter.ID }}
+}
+
+if len(chapters) > 0 {
+  <script>
+  const svgs = {
+      "read": `<svg class="h-4 w-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 00-1.414 0L9 11.586 6.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l7-7a1 1 0 000-1.414z" clip-rule="evenodd"/></svg>`,
+      "pending": ``
+    };
+
+    const mangaId = {{ chapters[0].Mangaid }};
+    const key = "read_" + mangaId;
+
+    let previousRead = localStorage.getItem(key);
+    let readChapters = [];
+
+    if (previousRead) {
+      try {
+        readChapters = JSON.parse(previousRead);
+        if (!Array.isArray(readChapters)) readChapters = [];
+      } catch (e) {
+        readChapters = [];
+      }
+    }
+
+    for (const chapter of {{ chapterIDs }}) {
+      const el = document.getElementById("read-status-" + chapter);
+      if (el) {
+        const res = readChapters.includes(chapter)
+        if (res) {
+          el.innerHTML = svgs["read"]
+        }else{
+          el.innerHTML = svgs["pending"]
+        }
+      }
+    }
+  </script>
+}
 }
 }

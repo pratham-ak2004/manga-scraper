@@ -5,6 +5,7 @@ import (
 
 	"download-server/cmd/handlers"
 	"download-server/cmd/services"
+	"download-server/cmd/utils"
 	"download-server/db"
 	"download-server/internal/logger"
 	"download-server/internal/routes"
@@ -21,7 +22,7 @@ func bindAllRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/dashboard/manga/{id}", routes.GET(handlers.MangaPage))
 	mux.HandleFunc("/dashboard/explorer/", routes.GET(handlers.FilesHandler))
 	mux.HandleFunc("/dashboard/tasks", routes.GET(handlers.TaskPage))
-	// TODO: mux.HandleFunc("/manga/read/", routes.GET(handlers.ReadChapter()))
+	mux.HandleFunc("/chapter/{id}", routes.GET(handlers.ChapterPage))
 
 	mux.HandleFunc("/manga/chapters/{id}", routes.GET(handlers.MangaChaptersList))
 	mux.HandleFunc("/manga/archives/{id}", routes.GET(handlers.MangaArchivesList))
@@ -39,6 +40,10 @@ func bindAllRoutes(mux *http.ServeMux) {
 	assetsFs := http.FileServer(http.Dir("public/assets/"))
 	mux.HandleFunc("/assets/", func(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix("/assets/", assetsFs).ServeHTTP(w, r)
+	})
+	filesFs := http.FileServer(http.Dir(utils.BaseDir))
+	mux.HandleFunc("/files/", func(w http.ResponseWriter, r *http.Request) {
+		http.StripPrefix("/files/", filesFs).ServeHTTP(w, r)
 	})
 
 	mux.HandleFunc("/download/", routes.GET(handlers.DownloadHandler))

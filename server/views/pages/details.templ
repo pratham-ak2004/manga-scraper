@@ -9,7 +9,7 @@ import (
 )
 
 templ Details(manga generated.Manga, details generated.ListMangaDetailsRow) {
-@layout.DashBoard(manga.Title.String) {
+@layout.DashBoard(manga.Title.String, false) {
 <!-- Back Button -->
 <div class="mb-6">
   <a href="/dashboard/manga"

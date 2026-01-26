@@ -1,4 +1,4 @@
--- Active: 1768887792894@@10.171.67.191@5432@manga_db
+-- Active: 1769191942250@@10.171.67.191@5000@manga_db
 -- name: CreateManga :one
 INSERT INTO Manga (title, url, status) VALUES ($1, $2, $3) RETURNING *;
 
@@ -60,11 +60,22 @@ FROM Chapter c
 INNER JOIN Manga m ON c.mangaId = m.id
 WHERE c.id = $1;
 
+-- name: GetChapterToReadByID :one
+SELECT 
+  c.*, 
+  COALESCE((SELECT p.id FROM Chapter p WHERE p.number = c.number - 1 AND p.mangaId = c.mangaId), NULL) AS previous_chapter, 
+  COALESCE((SELECT n.id FROM Chapter n WHERE n.number = c.number + 1 AND n.mangaId = c.mangaId), NULL) AS next_chapter,
+  (SELECT m.title AS title FROM Manga m WHERE m.id = c.mangaId)
+FROM Chapter c WHERE c.id = $1;
+
 -- name: GetChapterByIndexAndManga :one
 SELECT * FROM Chapter WHERE number = $1 AND mangaId = $2;
 
 -- name: GetChaptersByMangaID :many
-SELECT c.*, ( SELECT COUNT(*) FROM Page WHERE chapterId = c.id ) AS page_count FROM Chapter c WHERE mangaId = $1 ORDER BY number ASC;
+SELECT c.*, 
+  ( SELECT COUNT(*) FROM Page WHERE chapterId = c.id ) AS page_count 
+FROM Chapter c WHERE mangaId = $1 
+ORDER BY number ASC;
 
 -- name: GetChaptersByMangaIDWithPageCount :many
 SELECT * FROM Chapter c LEFT JOIN (
@@ -77,6 +88,9 @@ ORDER BY c.number ASC;
 
 -- name: GetPageByIndexAndChapterID :one
 SELECT * FROM Page where index = $1 AND chapterId = $2;
+
+-- name: GetPagesByChapterID :many
+SELECT * FROM Page WHERE chapterId = $1 ORDER BY index ASC;
 
 -- name: GetAllPendingTask :many
 SELECT * FROM Task WHERE status != 'SUCCESS' ORDER BY createdAt ASC;

@@ -10,7 +10,7 @@ import (
 )
 
 templ Home(data utils.DashBoardData, taskDetails generated.DashboardTaskDetailsRow) {
-@layout.DashBoard("Dashboard"){
+@layout.DashBoard("Dashboard", false){
 <!-- Stats Grid -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
   <!-- Total Manga Card -->
@@ -47,7 +47,7 @@ templ Home(data utils.DashBoardData, taskDetails generated.DashboardTaskDetailsR
         <p class="text-3xl font-bold text-warning mt-2">{ fmt.Sprintf("%d", data.Total.Pages) }</p>
       </div>
       <div class="bg-warning/10 p-3 rounded-lg group-hover:bg-warning/15 transition-colors">
-       @svg.EmptyFile()
+        @svg.EmptyFile()
       </div>
     </div>
   </div>
@@ -109,8 +109,8 @@ templ Home(data utils.DashBoardData, taskDetails generated.DashboardTaskDetailsR
       <h3 class="text-xl font-semibold text-foreground">Task Status</h3>
       <p class="text-sm text-muted-foreground">Background task execution overview</p>
     </div>
-     <div class="flex items-center gap-2 mb-2 justify-between">
-     <div>
+    <div class="flex items-center gap-2 mb-2 justify-between">
+      <div>
         <label for="timeDropdown" class="text-sm text-muted-foreground">Refresh every:</label>
         <select id="timeDropdown" class="border rounded px-2 py-1 text-sm">
           <option value="0">None</option>
@@ -122,15 +122,15 @@ templ Home(data utils.DashBoardData, taskDetails generated.DashboardTaskDetailsR
         </select>
       </div>
       <a href="/dashboard/tasks" class="flex flex-row justify-center items-center gap-2 text-muted-foreground">
-      tasks 
-      @svg.ExternalLink()
+        tasks
+        @svg.ExternalLink()
       </a>
     </div>
     <div id="polling-element" hx-get="/task/status" hx-trigger="every 10s, refresh" hx-swap="innerHTML">
       @components.TaskDetails(taskDetails)
     </div>
     <script>
-      document.getElementById('timeDropdown').addEventListener('change', function() {
+      document.getElementById('timeDropdown').addEventListener('change', function () {
         // Get the new interval value from the dropdown
         var newInterval = this.value;
 

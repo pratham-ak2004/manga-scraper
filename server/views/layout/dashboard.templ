@@ -1,8 +1,8 @@
 package layout
 
-import ( 
-  "download-server/cmd/utils" 
-  )
+import (
+"download-server/cmd/utils"
+)
 
 type DashBoardItem struct {
 Name string
@@ -36,15 +36,19 @@ Icon: `
 `,
 },
 {
-  Name: "Tasks",
-  Path: "/dashboard/tasks",
-  Icon: `
-  <path d="M13 5h8"/><path d="M13 12h8"/><path d="M13 19h8"/><path d="m3 17 2 2 4-4"/><rect x="3" y="4" width="6" height="6" rx="1"/>
-  `,
+Name: "Tasks",
+Path: "/dashboard/tasks",
+Icon: `
+<path d="M13 5h8" />
+<path d="M13 12h8" />
+<path d="M13 19h8" />
+<path d="m3 17 2 2 4-4" />
+<rect x="3" y="4" width="6" height="6" rx="1" />
+`,
 },
 }
 
-templ DashBoard(title string){
+templ DashBoard(title string, hidden bool){
 @Index(){
 <div class="flex h-screen bg-background">
   <!-- Sidebar -->
@@ -120,15 +124,18 @@ templ DashBoard(title string){
     </nav>
 
     <!-- Footer -->
-    <div class="p-4 border-t border-border">
-      <div class="flex items-center justify-between">
-        <span class="text-xs text-muted-foreground">Version { utils.Version }</span>
+    <div class="w-full">
+      <div class="p-4 border-t border-border">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-muted-foreground">Version { utils.Version }</span>
+        </div>
       </div>
     </div>
   </aside>
 
   <!-- Main Content Area -->
   <div class="flex-1 flex flex-col overflow-hidden min-w-0">
+    if !hidden {
     <!-- Header -->
     <header class="bg-card shadow-sm border-b border-border px-4 py-4 sm:px-6">
       <div class="flex items-center justify-between">
@@ -156,9 +163,9 @@ templ DashBoard(title string){
         </div>
       </div>
     </header>
-
+    }
     <!-- Page Content -->
-    <main class="flex-1 overflow-y-auto bg-background p-4 sm:p-6">
+    <main class="flex-1 overflow-y-auto bg-background p-2 sm:p-6">
       <div class="max-w-7xl mx-auto">
         { children... }
       </div>

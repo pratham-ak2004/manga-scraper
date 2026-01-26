@@ -154,14 +154,14 @@ func DownloadHandler(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	stat, err := file.Stat()
-    if err != nil {
-        http.Error(w, "Unable to stat file", http.StatusInternalServerError)
-        return
-    }
+	if err != nil {
+		http.Error(w, "Unable to stat file", http.StatusInternalServerError)
+		return
+	}
 
-    w.Header().Set("Content-Disposition", `attachment; filename="` + stat.Name() + `"`)
-    w.Header().Set("Content-Type", "application/octet-stream")
-    w.Header().Set("Accept-Ranges", "bytes")
+	w.Header().Set("Content-Disposition", `attachment; filename="`+stat.Name()+`"`)
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Accept-Ranges", "bytes")
 
 	http.ServeContent(w, r, stat.Name(), stat.ModTime(), file)
 }
@@ -179,4 +179,50 @@ func TaskPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Failed to generate HTML", http.StatusInternalServerError)
 	}
+}
+
+func ChapterPage(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimPrefix(r.URL.Path, "/chapter/")
+	if id == "" {
+		http.Error(w, "Invalid Chapter ID", http.StatusBadRequest)
+		return
+	}
+
+	queries := db.GetDB()
+	chapter, err := queries.GetChapterToReadByID(r.Context(), id)
+	if err != nil && err.Error() != "no rows in result set" {
+		http.Error(w, "Failed to fetch Chapter from DB", http.StatusInternalServerError)
+		return
+	}
+	if err != nil && err.Error() == "no rows in result set" {
+		err = pages.NotFound().Render(r.Context(), w)
+		if err != nil {
+			http.Error(w, "Failed to generate Not Found page", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	chapterPages, err := queries.GetPagesByChapterID(r.Context(), chapter.ID)
+	if err != nil && err.Error() != "no rows in result set" {
+		http.Error(w, "Failed to fetch Chapter from DB", http.StatusInternalServerError)
+		return
+	}
+	if err != nil && err.Error() == "no rows in result set" {
+		err = pages.NotFound().Render(r.Context(), w)
+		if err != nil {
+			http.Error(w, "Failed to generate Not Found page", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	for i := len(chapterPages) - 1; i >= 0; i-- {
+		chapterPages[i].Filepath = "/files/" + strings.TrimPrefix(chapterPages[i].Filepath, utils.BaseDir)
+	}
+
+	err = pages.ReadChapter(chapter, chapterPages).Render(r.Context(), w)
+	if err != nil {
+		http.Error(w, "Failed to generate Not Found page", http.StatusInternalServerError)
+		return
+	}
+
 }

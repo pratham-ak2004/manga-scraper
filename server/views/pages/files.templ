@@ -1,17 +1,17 @@
 package pages
 
 import (
-	"download-server/views/layout"
-	"download-server/cmd/utils"
-	"download-server/views/components"
+"download-server/views/layout"
+"download-server/cmd/utils"
+"download-server/views/components"
 )
 
 templ Files(data utils.FileExplorerData) {
-	@layout.DashBoard("File Explorer") {
-		<main class="flex justify-center w-full pt-6 pb-12">
-			<div class="w-full max-w-7xl px-4 md:px-6">
-				@components.FileExplorerGrid(data)
-			</div>
-		</main>
-	}
+@layout.DashBoard("File Explorer", false) {
+<main class="flex justify-center w-full pt-6 pb-12">
+  <div class="w-full max-w-7xl px-4 md:px-6">
+    @components.FileExplorerGrid(data)
+  </div>
+</main>
+}
 }

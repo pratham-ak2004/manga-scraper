@@ -7,7 +7,7 @@ import (
 )
 
 templ TaskPage(details generated.DashboardTaskDetailsRow, tasks []generated.Task) {
-@layout.DashBoard("Tasks"){
+@layout.DashBoard("Tasks", false){
 <div>
   <div class="mb-6 sm:mb-8">
     <div class="mb-2">

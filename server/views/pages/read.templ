@@ -1,0 +1,221 @@
+package pages
+
+import (
+"download-server/db/generated"
+"download-server/views/layout"
+"fmt"
+"strconv"
+)
+
+templ ReadChapter(chapter generated.GetChapterToReadByIDRow, pages []generated.Page){
+@layout.DashBoard("Reading", true){
+<div class="max-w-4xl pt-2 mx-auto">
+  <!-- Chapter Info Card -->
+  <div class="bg-card rounded-xl border border-border shadow-sm p-4 mb-6" id="top">
+    <div class="flex justify-center mb-3">
+      <a href="/dashboard"
+        class="inline-flex items-center gap-2 px-3 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors text-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m0 0h3m0 0h3m0 0a1 1 0 001-1V10M9 21h6" />
+        </svg>
+        Dashboard
+      </a>
+    </div>
+    <div class="text-center mb-3">
+      <a href={ templ.SafeURL("/dashboard/manga/" + chapter.Mangaid) } class="hover:text-primary transition-colors">
+        <div class="lg:text-lg text-md font-medium text-foreground hover:text-primary transition-colors">
+          if chapter.Title.Valid {
+          { chapter.Title.String }
+          } else {
+          Untitled Manga
+          }
+        </div>
+      </a>
+      <a href={ templ.SafeURL("/chapter/" + chapter.ID) } class="hover:text-primary transition-colors">
+        <div class="lg:text-md text-sm text-muted-foreground hover:text-primary transition-colors">
+          Chapter { fmt.Sprintf("%.1f", chapter.Number) } • { fmt.Sprintf("%d", len(pages)) } pages
+        </div>
+      </a>
+    </div>
+    <div class="flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 w-full justify-center">
+        if chapter.PreviousChapter != nil {
+        <a href={ templ.SafeURL("/chapter/" + fmt.Sprintf("%v", chapter.PreviousChapter)) }
+          class="inline-flex items-center justify-center gap-2 w-full text-center px-3 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors text-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Previous
+        </a>
+        } else {
+        <div
+          class="inline-flex items-center gap-2 px-3 justify-center w-full py-2 text-center bg-muted text-muted-foreground rounded-lg text-sm opacity-50 cursor-not-allowed">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Previous
+        </div>
+        }
+      </div>
+
+      <div class="flex items-center gap-2 w-full">
+        if chapter.NextChapter != nil {
+        <a href={ templ.SafeURL("/chapter/" + fmt.Sprintf("%v", chapter.NextChapter)) }
+          class="inline-flex items-center justify-center gap-2 w-full px-3 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors text-sm">
+          Next
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+        } else {
+        <div
+          class="inline-flex items-center justify-center gap-2 px-3 w-full py-2 bg-muted text-muted-foreground rounded-lg text-sm opacity-50 cursor-not-allowed">
+          Next
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+
+
+  if len(pages) == 0 {
+  <!-- Empty state -->
+  <div class="bg-card rounded-xl border border-border shadow-sm p-12 text-center">
+    <svg class="mx-auto h-12 w-12 text-muted-foreground mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+    <h3 class="text-xl font-medium text-foreground">No pages found</h3>
+    <p class="text-muted-foreground mt-2">This chapter doesn't have any pages yet.</p>
+  </div>
+  } else {
+  <!-- Pages -->
+  <div class="space-y-2">
+    for i, page := range pages {
+    <div class="page-container bg-card rounded-lg border border-border shadow-sm overflow-hidden p-2" id={
+      strconv.Itoa(i) } data-page={ strconv.Itoa(i + 1) }>
+      <a href={ "#" + strconv.Itoa(i+1) }>
+        if page.Filepath != "" {
+        <img src={ page.Filepath } alt={ fmt.Sprintf("Page %d", i + 1) }
+          class="w-full h-auto object-contain min-h-[600px] max-h-[1200px] md:min-h-[800px] md:max-h-[1400px]" />
+        } else if page.Url != "" {
+        <img src={ page.Url } alt={ fmt.Sprintf("Page %d", i + 1) }
+          class="w-full h-auto object-contain min-h-[600px] max-h-[1200px] md:min-h-[800px] md:max-h-[1400px]" />
+        } else {
+        <div class="flex items-center justify-center h-[600px] md:h-[800px] text-muted-foreground bg-muted/50">
+          <svg class="w-12 h-12 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span>Page { strconv.Itoa(i + 1) } not available</span>
+        </div>
+        }
+      </a>
+    </div>
+    }
+  </div>
+  }
+
+  <!-- Bottom Navigation -->
+  <div class="mt-8 w-full mb-4 flex justify-center" id={ strconv.Itoa(len(pages)) }>
+    <div class="bg-card w-full rounded-xl border border-border shadow-sm p-4">
+      <div class="flex justify-center mb-3">
+        <a class="inline-flex items-center gap-2 px-3 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors text-sm"
+          href="#top">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+          </svg>
+          Back to top
+        </a>
+      </div>
+      <div class="text-center mb-3">
+        <a href={ templ.SafeURL("/dashboard/manga/" + chapter.Mangaid) } class="hover:text-primary transition-colors">
+          <div class="lg:text-lg text-md font-medium text-foreground hover:text-primary transition-colors">
+            if chapter.Title.Valid {
+            { chapter.Title.String }
+            } else {
+            Untitled Manga
+            }
+          </div>
+        </a>
+        <a href={ templ.SafeURL("/chapter/" + chapter.ID) } class="hover:text-primary transition-colors">
+          <div class="lg:text-md text-sm text-muted-foreground hover:text-primary transition-colors">
+            Chapter { fmt.Sprintf("%.1f", chapter.Number) } • { fmt.Sprintf("%d", len(pages)) } pages
+          </div>
+        </a>
+      </div>
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 w-full justify-center">
+          if chapter.PreviousChapter != nil {
+          <a href={ templ.SafeURL("/chapter/" + fmt.Sprintf("%v", chapter.PreviousChapter)) }
+            class="inline-flex items-center justify-center gap-2 w-full text-center px-3 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Previous
+          </a>
+          } else {
+          <div
+            class="inline-flex items-center gap-2 px-3 justify-center w-full py-2 text-center bg-muted text-muted-foreground rounded-lg text-sm opacity-50 cursor-not-allowed">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Previous
+          </div>
+          }
+        </div>
+
+        <div class="flex items-center gap-2 w-full">
+          if chapter.NextChapter != nil {
+          <a href={ templ.SafeURL("/chapter/" + fmt.Sprintf("%v", chapter.NextChapter)) }
+            class="inline-flex items-center justify-center gap-2 w-full px-3 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors text-sm">
+            Next
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+          } else {
+          <div
+            class="inline-flex items-center justify-center gap-2 px-3 w-full py-2 bg-muted text-muted-foreground rounded-lg text-sm opacity-50 cursor-not-allowed">
+            Next
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const mangaId = {{ chapter.Mangaid }};
+  const chapterId = {{ chapter.ID }};
+  const key = "read_" + mangaId;
+
+  let previousRead = localStorage.getItem(key);
+  let readChapters = [];
+
+  if (previousRead) {
+    try {
+      readChapters = JSON.parse(previousRead);
+      if (!Array.isArray(readChapters)) readChapters = [];
+    } catch (e) {
+      readChapters = [];
+    }
+  }
+
+  if (!readChapters.includes(chapterId)) {
+    readChapters.push(chapterId);
+    localStorage.setItem(key, JSON.stringify(readChapters));
+  }
+});
+</script>
+}
+}

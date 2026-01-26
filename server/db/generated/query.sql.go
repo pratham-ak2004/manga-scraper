@@ -110,7 +110,7 @@ type CreateMangaParams struct {
 	Status NullStatus
 }
 
-// Active: 1768887792894@@10.171.67.191@5432@manga_db
+// Active: 1769191942250@@10.171.67.191@5000@manga_db
 func (q *Queries) CreateManga(ctx context.Context, arg CreateMangaParams) (Manga, error) {
 	row := q.db.QueryRow(ctx, createManga, arg.Title, arg.Url, arg.Status)
 	var i Manga
@@ -518,8 +518,49 @@ func (q *Queries) GetChapterByURL(ctx context.Context, url string) (Chapter, err
 	return i, err
 }
 
+const getChapterToReadByID = `-- name: GetChapterToReadByID :one
+SELECT 
+  c.id, c.number, c.url, c.mangaid, c.createdat, c.updatedat, 
+  COALESCE((SELECT p.id FROM Chapter p WHERE p.number = c.number - 1 AND p.mangaId = c.mangaId), NULL) AS previous_chapter, 
+  COALESCE((SELECT n.id FROM Chapter n WHERE n.number = c.number + 1 AND n.mangaId = c.mangaId), NULL) AS next_chapter,
+  (SELECT m.title AS title FROM Manga m WHERE m.id = c.mangaId)
+FROM Chapter c WHERE c.id = $1
+`
+
+type GetChapterToReadByIDRow struct {
+	ID              string
+	Number          float64
+	Url             string
+	Mangaid         string
+	Createdat       pgtype.Timestamp
+	Updatedat       pgtype.Timestamp
+	PreviousChapter interface{}
+	NextChapter     interface{}
+	Title           pgtype.Text
+}
+
+func (q *Queries) GetChapterToReadByID(ctx context.Context, id string) (GetChapterToReadByIDRow, error) {
+	row := q.db.QueryRow(ctx, getChapterToReadByID, id)
+	var i GetChapterToReadByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.Number,
+		&i.Url,
+		&i.Mangaid,
+		&i.Createdat,
+		&i.Updatedat,
+		&i.PreviousChapter,
+		&i.NextChapter,
+		&i.Title,
+	)
+	return i, err
+}
+
 const getChaptersByMangaID = `-- name: GetChaptersByMangaID :many
-SELECT c.id, c.number, c.url, c.mangaid, c.createdat, c.updatedat, ( SELECT COUNT(*) FROM Page WHERE chapterId = c.id ) AS page_count FROM Chapter c WHERE mangaId = $1 ORDER BY number ASC
+SELECT c.id, c.number, c.url, c.mangaid, c.createdat, c.updatedat, 
+  ( SELECT COUNT(*) FROM Page WHERE chapterId = c.id ) AS page_count 
+FROM Chapter c WHERE mangaId = $1 
+ORDER BY number ASC
 `
 
 type GetChaptersByMangaIDRow struct {
@@ -709,6 +750,39 @@ func (q *Queries) GetPageByIndexAndChapterID(ctx context.Context, arg GetPageByI
 		&i.Updatedat,
 	)
 	return i, err
+}
+
+const getPagesByChapterID = `-- name: GetPagesByChapterID :many
+SELECT index, url, alttext, filepath, downloadedat, chapterid, createdat, updatedat FROM Page WHERE chapterId = $1 ORDER BY index ASC
+`
+
+func (q *Queries) GetPagesByChapterID(ctx context.Context, chapterid string) ([]Page, error) {
+	rows, err := q.db.Query(ctx, getPagesByChapterID, chapterid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Page
+	for rows.Next() {
+		var i Page
+		if err := rows.Scan(
+			&i.Index,
+			&i.Url,
+			&i.Alttext,
+			&i.Filepath,
+			&i.Downloadedat,
+			&i.Chapterid,
+			&i.Createdat,
+			&i.Updatedat,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getPagesByRangeAndMangaID = `-- name: GetPagesByRangeAndMangaID :many
