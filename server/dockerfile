@@ -16,8 +16,15 @@ RUN curl -fsSL https://bun.sh/install | bash
 ENV BUN_INSTALL="/root/.bun"
 ENV PATH="/root/.bun/bin:$PATH"
 
-RUN make install
-RUN make generate
+RUN go get --tool github.com/a-h/templ/cmd/templ@latest
+RUN bun install --frozen-lockfile --no-cache
+
+RUN bunx --bun @tailwindcss/cli -i ./views/global.css -o ./public/assets/css/index.css --minify
+RUN go tool templ generate
+
+## RUN curl -sSfL https://github.com/sqlc-dev/sqlc-gen-go/releases/download/v1.4.0/sqlc-gen-go_1.4.0.wasm -o ./bin/sqlc-1.4.0.wasm;
+## RUN sqlc generate
+
 RUN CGO_ENABLED=0 GOOS=linux go build -o server cmd/main.go
 
 # Deploy Stage
