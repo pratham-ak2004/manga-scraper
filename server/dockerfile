@@ -17,7 +17,7 @@ ENV BUN_INSTALL="/root/.bun"
 ENV PATH="/root/.bun/bin:$PATH"
 
 RUN make install
-RUN make build
+RUN make generate
 RUN CGO_ENABLED=0 GOOS=linux go build -o server cmd/main.go
 
 # Deploy Stage
