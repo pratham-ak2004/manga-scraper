@@ -17,7 +17,7 @@ ENV BUN_INSTALL="/root/.bun"
 ENV PATH="/root/.bun/bin:$PATH"
 
 RUN go get --tool github.com/a-h/templ/cmd/templ@latest
-RUN bun install --frozen-lockfile --no-cache
+RUN bun install --no-cache
 
 RUN bunx --bun @tailwindcss/cli -i ./views/global.css -o ./public/assets/css/index.css --minify
 RUN go tool templ generate
