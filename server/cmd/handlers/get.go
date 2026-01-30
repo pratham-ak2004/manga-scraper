@@ -20,10 +20,21 @@ func GlobalHandle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := pages.NotFound().Render(r.Context(), w)
-	if err != nil {
-		http.Error(w, "Something went wrong : "+err.Error(), http.StatusInternalServerError)
+	if strings.HasPrefix(r.URL.String(), "/dashboard/") {
+		err := pages.NotFound().Render(r.Context(), w)
+		if err != nil {
+			http.Error(w, "Something went wrong : "+err.Error(), http.StatusInternalServerError)
+		}
+		return
 	}
+
+	if strings.HasPrefix(r.URL.String(), "/api/") {
+		http.Error(w, "API endpoint not found", http.StatusNotFound)
+		return
+	}
+
+	http.Error(w, "Route not found", http.StatusNotFound)
+
 }
 
 func DashBoardPage(w http.ResponseWriter, r *http.Request) {
@@ -124,14 +135,22 @@ func FilesHandler(w http.ResponseWriter, r *http.Request) {
 	resPath := strings.TrimPrefix(r.URL.Path, "/dashboard/explorer/")
 	directoryItems, err := utils.GetFolderContent(resPath)
 	if err != nil {
-		logger.Logger.Println(logger.Colors["red"] + err.Error() + logger.Colors["reset"])
-		w.WriteHeader(http.StatusInternalServerError)
+		err = pages.ServerError(err.Error()).Render(r.Context(), w)
+		if err != nil {
+			logger.Logger.Println(logger.Colors["red"] + err.Error() + logger.Colors["reset"])
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
 		return
 	}
+
 	err = pages.Files(directoryItems).Render(r.Context(), w)
 	if err != nil {
-		logger.Logger.Println(logger.Colors["red"] + err.Error() + logger.Colors["reset"])
-		w.WriteHeader(http.StatusInternalServerError)
+		err = pages.ServerError(err.Error()).Render(r.Context(), w)
+		if err != nil {
+			logger.Logger.Println(logger.Colors["red"] + err.Error() + logger.Colors["reset"])
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+		return
 	}
 }
 

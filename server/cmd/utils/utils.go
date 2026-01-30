@@ -139,6 +139,13 @@ func WithTicker(action func() bool) {
 	}
 }
 
+const (
+	ToastTypeSuccess = "success"
+	ToastTypeError   = "error"
+	ToastTypeWarning = "warning"
+	ToastTypeInfo    = "info"
+)
+
 func CreateToast(w http.ResponseWriter, toastType string, body string) {
 	w.Header().Set("HXToaster-Body", body)
 	w.Header().Set("HXToaster-Type", toastType)

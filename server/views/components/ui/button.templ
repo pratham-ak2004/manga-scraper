@@ -32,6 +32,7 @@ type ButtonProps struct {
 	Icon      templ.Component
 	HxPost    string
 	HxGet     string
+	HxDelete  string
 	HxTarget  string
 	HxSwap    string
 	HxTrigger string
@@ -51,6 +52,9 @@ templ Button(props ButtonProps) {
 		}
 		if props.HxGet != "" {
 			hx-get={ props.HxGet }
+		}
+		if props.HxDelete != "" {
+			hx-delete={ props.HxDelete }
 		}
 		if props.HxTarget != "" {
 			hx-target={ props.HxTarget }

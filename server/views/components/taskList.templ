@@ -35,7 +35,7 @@ templ TaskList(tasks []generated.Task) {
         </tr>
         } else {
         for _, task := range tasks {
-        <tr class="hover:bg-muted/50 transition-colors">
+        <tr class="hover:bg-muted/50 transition-colors" id={ "row-" + task.ID } >
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="text-sm font-medium text-foreground">{ task.Name }</div>
           </td>
@@ -52,6 +52,11 @@ templ TaskList(tasks []generated.Task) {
           <td class="px-6 py-4 whitespace-nowrap">
             if task.Status.Valid {
             switch task.Status.TaskStatus {
+            case generated.TaskStatusCOMMITTED:
+            <span
+              class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-success/10 text-success border border-success/20">
+              Committed
+            </span>
             case generated.TaskStatusSUCCESS:
             <span
               class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-success/10 text-success border border-success/20">
@@ -99,15 +104,28 @@ templ TaskList(tasks []generated.Task) {
             }
           </td>
           <td>
-            if task.Status.Valid && task.Status.TaskStatus == generated.TaskStatusFAILURE {
-            @ui.Button(ui.ButtonProps{
-            Variant: ui.ButtonSecondary,
-            Size: ui.ButtonSizeSm,
-            Class: "w-fit border hover:border-foreground/50",
-            HxPost: "/api/v1/eval/task?id=" + task.ID,
-            }) {
-            @svg.Wrench()
-            }
+            if task.Status.Valid {
+              if task.Status.TaskStatus == generated.TaskStatusFAILURE {
+                @ui.Button(ui.ButtonProps{
+                Variant: ui.ButtonSecondary,
+                Size: ui.ButtonSizeSm,
+                Class: "w-fit border hover:border-foreground/50",
+                HxPost: "/api/v1/eval/task?id=" + task.ID,
+                }) {
+                @svg.Wrench()
+                }    
+              }
+              if task.Status.TaskStatus == generated.TaskStatusCOMMITTED {
+                @ui.Button(ui.ButtonProps{
+                Variant: ui.ButtonOutline,
+                Size: ui.ButtonSizeSm,
+                Class: "w-fit border stroke-destructive",
+                HxDelete: "/api/v1/task?id=" + task.ID,
+                HxTarget: "#row-" + task.ID,
+                }) {
+                @svg.Trash("stroke-destructive size-5")
+                }
+              }
             }
           </td>
         </tr>

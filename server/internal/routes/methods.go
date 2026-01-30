@@ -41,6 +41,17 @@ func POST(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
+func DELETE(next http.HandlerFunc) http.HandlerFunc {
+	return logger.Timer(colors["cyan"]+"DELETE", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		} else {
+			next(w, r)
+		}
+	})
+}
+
 func ServFile(path string) http.HandlerFunc {
 	return logger.Timer(colors["green"]+"File", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {

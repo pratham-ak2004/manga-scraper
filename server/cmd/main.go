@@ -15,8 +15,10 @@ import (
 )
 
 func bindAllRoutes(mux *http.ServeMux) {
+	// Prometheus metrics endpoint
 	mux.Handle("/metrics", promhttp.Handler())
 
+	// Dashboard and pages
 	mux.HandleFunc("/dashboard", routes.GET(handlers.DashBoardPage))
 	mux.HandleFunc("/dashboard/manga", routes.GET(handlers.MangaListPage))
 	mux.HandleFunc("/dashboard/manga/{id}", routes.GET(handlers.MangaPage))
@@ -24,6 +26,7 @@ func bindAllRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/dashboard/tasks", routes.GET(handlers.TaskPage))
 	mux.HandleFunc("/chapter/{id}", routes.GET(handlers.ChapterPage))
 
+	// Template handlers
 	mux.HandleFunc("/manga/chapters/{id}", routes.GET(handlers.MangaChaptersList))
 	mux.HandleFunc("/manga/archives/{id}", routes.GET(handlers.MangaArchivesList))
 	mux.HandleFunc("/archives/download/", routes.GET(handlers.DownloadHandler))
@@ -31,12 +34,15 @@ func bindAllRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/task/status", routes.GET(handlers.TaskDetailsTempl))
 	mux.HandleFunc("/task/list", routes.GET(handlers.TaskListTempl))
 
+	// API Handlers
 	mux.HandleFunc("/api/v1/manga", routes.POST(handlers.NewMangaLinkHandler))
 	mux.HandleFunc("/api/v1/archive", routes.POST(handlers.ArchiveMangaHandler))
 	mux.HandleFunc("/api/v1/eval/manga", routes.POST(handlers.MangaEvalHandler))
 	mux.HandleFunc("/api/v1/eval/chapter", routes.POST(handlers.MangaEvalHandler))
 	mux.HandleFunc("/api/v1/eval/task", routes.POST(handlers.TaskEvalHandler))
+	mux.HandleFunc("/api/v1/task", routes.DELETE(handlers.DeleteTaskHandler))
 
+	// Static file servers
 	assetsFs := http.FileServer(http.Dir("public/assets/"))
 	mux.HandleFunc("/assets/", func(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix("/assets/", assetsFs).ServeHTTP(w, r)
@@ -46,8 +52,10 @@ func bindAllRoutes(mux *http.ServeMux) {
 		http.StripPrefix("/files/", filesFs).ServeHTTP(w, r)
 	})
 
+	// Download handler
 	mux.HandleFunc("/download/", routes.GET(handlers.DownloadHandler))
-	mux.HandleFunc("/", routes.GET(handlers.GlobalHandle))
+
+	mux.HandleFunc("/", handlers.GlobalHandle)
 }
 
 func main() {

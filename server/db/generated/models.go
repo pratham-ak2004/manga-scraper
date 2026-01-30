@@ -100,11 +100,12 @@ func (ns NullStatus) Value() (driver.Value, error) {
 type TaskStatus string
 
 const (
-	TaskStatusPENDING TaskStatus = "PENDING"
-	TaskStatusSUCCESS TaskStatus = "SUCCESS"
-	TaskStatusRETRY   TaskStatus = "RETRY"
-	TaskStatusFAILURE TaskStatus = "FAILURE"
-	TaskStatusSTARTED TaskStatus = "STARTED"
+	TaskStatusPENDING   TaskStatus = "PENDING"
+	TaskStatusSUCCESS   TaskStatus = "SUCCESS"
+	TaskStatusRETRY     TaskStatus = "RETRY"
+	TaskStatusFAILURE   TaskStatus = "FAILURE"
+	TaskStatusSTARTED   TaskStatus = "STARTED"
+	TaskStatusCOMMITTED TaskStatus = "COMMITTED"
 )
 
 func (e *TaskStatus) Scan(src interface{}) error {

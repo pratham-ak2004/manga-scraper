@@ -29,6 +29,9 @@ UPDATE Page SET url = $3, altText = $4, filePath = $5 WHERE index = $1 AND chapt
 -- name: UpdateTaskByID :one
 UPDATE Task SET data = $2, status = $3 WHERE id = $1 RETURNING *;
 
+-- name: UpdateTaskStatusByID :one
+UPDATE Task SET status = $2 WHERE id = $1 RETURNING *;
+
 -- name: UpdateArchiveStatusAndSizeByID :one
 UPDATE Archive SET status = $2, size = $3 WHERE id = $1 RETURNING *;
 
@@ -93,7 +96,7 @@ SELECT * FROM Page where index = $1 AND chapterId = $2;
 SELECT * FROM Page WHERE chapterId = $1 ORDER BY index ASC;
 
 -- name: GetAllPendingTask :many
-SELECT * FROM Task WHERE status != 'SUCCESS' ORDER BY createdAt ASC;
+SELECT * FROM Task WHERE status != 'SUCCESS' OR status != 'COMMITTED' ORDER BY createdAt ASC;
 
 -- name: GetAllCompletedTask :many
 SELECT * FROM Task WHERE status = 'SUCCESS' ORDER BY updatedAt DESC;
@@ -107,6 +110,7 @@ ORDER BY
     WHEN 'RETRY' THEN 3
     WHEN 'SUCCESS' THEN 4
     WHEN 'PENDING' THEN 5
+    WHEN 'COMMITTED' THEN 4
   END ASC,
   CASE type
     WHEN 'REQUEST' THEN 1
@@ -193,7 +197,7 @@ WHERE m.id = $1;
 SELECT 
     COUNT(*) FILTER (WHERE status = 'PENDING')::INT AS pending_tasks,
     COUNT(*) FILTER (WHERE status = 'RETRY')::INT AS retry_tasks,
-    COUNT(*) FILTER (WHERE status = 'SUCCESS')::INT AS successful_tasks,
+    COUNT(*) FILTER (WHERE status IN ('SUCCESS', 'COMMITTED'))::INT AS successful_tasks,
     COUNT(*) FILTER (WHERE status = 'FAILURE')::INT AS failed_tasks,
     COUNT(*) FILTER (WHERE status = 'STARTED')::INT AS started_tasks
 FROM Task;

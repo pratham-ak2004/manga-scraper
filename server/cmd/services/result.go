@@ -28,7 +28,7 @@ func HandleTaskResult(task string, id string, data CeleryResult) error {
 		remove, err = TasksPipelinePageDownloadResult(data)
 
 	case "tasks.archive.manga.cbz":
-		remove, err = TasksRequestMangaArchiveResult(data.Result)
+		remove, err = TasksRequestMangaArchiveResult(data.Result, id)
 
 	default:
 		logger.Logger.Println("Default")
@@ -244,7 +244,7 @@ func TasksPipelinePageDownloadResult(data CeleryResult) (bool, error) {
 	return true, nil
 }
 
-func TasksRequestMangaArchiveResult(data json.RawMessage) (bool, error) {
+func TasksRequestMangaArchiveResult(data json.RawMessage, id string) (bool, error) {
 	var result ArchiveResult
 	if err := json.Unmarshal([]byte(data), &result); err != nil {
 		logger.Logger.Println(logger.Colors["yellow"] + "Failed to Unmarshal result for task - tasks.archive.manga.cbz : " + err.Error() + logger.Colors["reset"])
@@ -257,6 +257,14 @@ func TasksRequestMangaArchiveResult(data json.RawMessage) (bool, error) {
 		ID:     result.Payload.Archive.ID,
 		Status: generated.NullArchiveStatus{ArchiveStatus: generated.ArchiveStatusCOMPLETED, Valid: true},
 		Size:   pgtype.Int8{Int64: result.Data.FileSize, Valid: true},
+	})
+	if err != nil {
+		return false, err
+	}
+
+	_, err = queries.UpdateTaskStatusByID(context.Background(), generated.UpdateTaskStatusByIDParams{
+		ID:     id,
+		Status: generated.NullTaskStatus{TaskStatus: generated.TaskStatusCOMMITTED, Valid: true},
 	})
 	if err != nil {
 		return false, err

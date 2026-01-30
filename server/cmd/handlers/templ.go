@@ -63,6 +63,10 @@ func MangaArchivesList(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	for i := range archives {
+		archives[i].Filepath = strings.TrimPrefix(archives[i].Filepath, utils.BaseDir)
+	}
+
 	err = components.ArchivesList(archives).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, "Failed to generate Not Found page", http.StatusInternalServerError)

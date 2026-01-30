@@ -3,11 +3,42 @@ package pages
 import (
 "download-server/views/layout"
 )
+
 templ NotFound() {
-@layout.DashBoard("Not Found", true){
-<div class="flex flex-col items-center justify-center py-24">
-  <h1 class="text-3xl font-bold text-gray-800 mb-4">404 - Page Not Found</h1>
-  <p class="text-gray-600 text-lg">The requested page is not available.</p>
-</div>
+  @layout.Index() {
+  <div class="flex flex-col items-center justify-center min-h-[60vh] py-16">
+    <div class="bg-card rounded-xl border border-border shadow-sm p-8 flex flex-col items-center animate-fade-in">
+      <svg xmlns="http://www.w3.org/2000/svg" class="size-10 mb-10 stroke-destructive" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-octagon-x-icon lucide-octagon-x"><path d="m15 9-6 6"/><path d="M2.586 16.726A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2h6.624a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586z"/><path d="m9 9 6 6"/></svg>
+      <h1 class="text-3xl font-bold text-foreground mb-2">404 - Page Not Found</h1>
+      <p class="text-muted-foreground text-lg mb-6">The page you are looking for does not exist or has been moved.</p>
+      <a href="/dashboard" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-base font-medium">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m0 0h3m0 0h3m0 0a1 1 0 001-1V10M9 21h6" />
+        </svg>
+        Go to Dashboard
+      </a>
+    </div>
+  </div>
+  }
 }
+
+templ ServerError(err string) {
+  @layout.Index() {
+    <div class="flex flex-col items-center justify-center min-h-[60vh] py-16">
+      <div class="bg-card rounded-xl border border-border shadow-sm p-8 flex flex-col items-center animate-fade-in">
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-10 mb-10 stroke-destructive" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 9-6 6"/><path d="M2.586 16.726A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2h6.624a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586z"/><path d="m9 9 6 6"/></svg>
+        <h1 class="text-3xl font-bold text-foreground mb-2">500 - Something went wrong</h1>
+        <p class="text-muted-foreground text-lg mb-4">An unexpected error occurred while processing your request.</p>
+        <pre class="bg-background w-full border border-border text-muted-foreground rounded-md px-4 py-3 mb-6 text-left break-words max-w-2xl overflow-x-auto text-xs font-mono leading-relaxed whitespace-pre-wrap">
+          {err}
+        </pre>
+        <a href="/dashboard" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-base font-medium">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m0 0h3m0 0h3m0 0a1 1 0 001-1V10M9 21h6" />
+          </svg>
+          Go to Dashboard
+        </a>
+      </div>
+    </div>
+  }
 }

@@ -198,7 +198,7 @@ const dashboardTaskDetails = `-- name: DashboardTaskDetails :one
 SELECT 
     COUNT(*) FILTER (WHERE status = 'PENDING')::INT AS pending_tasks,
     COUNT(*) FILTER (WHERE status = 'RETRY')::INT AS retry_tasks,
-    COUNT(*) FILTER (WHERE status = 'SUCCESS')::INT AS successful_tasks,
+    COUNT(*) FILTER (WHERE status IN ('SUCCESS', 'COMMITTED'))::INT AS successful_tasks,
     COUNT(*) FILTER (WHERE status = 'FAILURE')::INT AS failed_tasks,
     COUNT(*) FILTER (WHERE status = 'STARTED')::INT AS started_tasks
 FROM Task
@@ -279,7 +279,7 @@ func (q *Queries) GetAllCompletedTask(ctx context.Context) ([]Task, error) {
 }
 
 const getAllPendingTask = `-- name: GetAllPendingTask :many
-SELECT id, name, type, status, data, payload, createdat, updatedat FROM Task WHERE status != 'SUCCESS' ORDER BY createdAt ASC
+SELECT id, name, type, status, data, payload, createdat, updatedat FROM Task WHERE status != 'SUCCESS' OR status != 'COMMITTED' ORDER BY createdAt ASC
 `
 
 func (q *Queries) GetAllPendingTask(ctx context.Context) ([]Task, error) {
@@ -320,6 +320,7 @@ ORDER BY
     WHEN 'RETRY' THEN 3
     WHEN 'SUCCESS' THEN 4
     WHEN 'PENDING' THEN 5
+    WHEN 'COMMITTED' THEN 4
   END ASC,
   CASE type
     WHEN 'REQUEST' THEN 1
@@ -1135,6 +1136,31 @@ type UpdateTaskByIDParams struct {
 
 func (q *Queries) UpdateTaskByID(ctx context.Context, arg UpdateTaskByIDParams) (Task, error) {
 	row := q.db.QueryRow(ctx, updateTaskByID, arg.ID, arg.Data, arg.Status)
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Type,
+		&i.Status,
+		&i.Data,
+		&i.Payload,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
+const updateTaskStatusByID = `-- name: UpdateTaskStatusByID :one
+UPDATE Task SET status = $2 WHERE id = $1 RETURNING id, name, type, status, data, payload, createdat, updatedat
+`
+
+type UpdateTaskStatusByIDParams struct {
+	ID     string
+	Status NullTaskStatus
+}
+
+func (q *Queries) UpdateTaskStatusByID(ctx context.Context, arg UpdateTaskStatusByIDParams) (Task, error) {
+	row := q.db.QueryRow(ctx, updateTaskStatusByID, arg.ID, arg.Status)
 	var i Task
 	err := row.Scan(
 		&i.ID,
